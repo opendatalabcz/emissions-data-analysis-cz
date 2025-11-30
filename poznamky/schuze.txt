@@ -1,0 +1,61 @@
+1.
+vysledkem je webova stranka - vizualni report
+melo by to mit realne vysledky
+zajmave vzory v datech najit
+pochopitelne pro sirokou verejnost
+sehani dat muze byt soucasti prace
+navrhnu, jak by zadani melo vypadat
+zadani se udela po chvili, co neco delam
+https://data.gov.cz/datové-sady
+https://stk.opendatalab.cz/
+dva datasety od roku 2018, kdy se to rozdelilo
+budu pracovat jenom s emisema
+cilova skupina je babicka, ktera nerozumi statistice
+oba jsou externisti
+martin mares, adam sazbo - jeset se vybere, kdo bude vedouci, ale fakticky budou dva
+https://x.com/xname50/status/1834530120930922742
+programovaci jazyk kvarto pro aktualizaci reportu
+catboost -> robustni modely
+
+
+ziskani dat
+research dat
+rozhodnuti do jake smeru jit, predikovani, hledani anomalii,...
+navrhnuti prvnosti zadani
+
+napsat mail, jak se mi podarilo ziskat data
+napsat mail se zadanim, az budu vedet
+potom dame schuzku
+
+
+2.
+Aktualizace stk.opendatalab
+rozdil vuci norme automobilky
+zjistovat za jakych podminek auto neprojde
+do zadani dat ziskani dat + EDA, zvolit vhodny format reprezentace
+podivat se do aplikace diplomky - parsovani do postrqre
+udelat zadani - cile, ziskani dat, eda, webovka
+psat otazky
+github username poslat -> zalozen repozitar
+sablona do overleafu (pozdeji)
+mirit na to, co by zobrazovala webova stranka
+poslat 2, 3 doporucene literatury (co pouziju v prvni casti bakalarky - XSD, studie, predchozi prace, metoda detekce anomalii)
+nechat si udelat dump databaze
+
+
+3.
+podivat se na diplomku pred dumpem
+regiser vozidel nebyl dostupny - 
+pouziti stejnych dat na predikci uspesnosti mereni jako diplomka (pripadne zlepsit)
+    - zjistit jaky model pouzival -> catboost
+    - regrese jako baseline model
+    - predikce uspechu -> feature importance
+    - korelace vysledku s chybami ze stk
+pouzit pandas profiling - pomoci toho i vycistit data
+    - vypnout relaci pripadne
+zamerit se na veci z postu a predchozi analyza
+
+dalsi prace
+   - migrace na github
+   - eda
+   - zakladni pipeline na model - metriky stejne jako diplomka

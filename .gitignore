@@ -1,0 +1,8 @@
+/.venv/
+/spustit_powershell.lnk
+data/
+.ipynb_checkpoints/
+__pycache__/
+# Prilis velke pro gitlab
+ANALYZA\ DAT\ MERENI\ SME\ z\ ISTP/
+RSV_vypis_vozidel_20251101.csv

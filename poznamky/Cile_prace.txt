@@ -1,0 +1,1 @@
+Cílem práce je analýza dat z emisních kontrol vyexportovaných z infomačního systému technických kontrol. Konkrétně bude kladen důraz na detekci anomálií a odhalení trendu s použitím metod strojového učení. Výsledek práce bude následně prezentován ve formě přehledných vizualizací formou webové aplikace zaměřené na širokou veřejnost a ve formě doporučení pro státní správu.

@@ -1,0 +1,90 @@
+Lide v komisi krome vedouciho a oponenta necetli -> dulezita je vizualni stranka
+Pouzivat anglicka ustalena slova jako framework
+Prinest flashku - z ni to bude prezentovano - idealne pdf
+Prezentuji praktickou ne teoretickou cast
+Lze zahrnout dulezite casti kodu
+2 casti zkousky - obhajoba, zkouseni -> lze neudelat jen jednu z nich (nelze ale opakovat jen jednu otazku)
+statnice v cervnu - opravny termin na zkouseni - srpen/zari -> lze nasoupit na magistra
+	- opravny termin na obhajobu - zimni semestr
+Prezentaci posilam az vecer pred obhajobou tejemnikovi, abych ji nemusel nosit na flashce
+
+STRUKTURA
+1) potitko - 40 min na pripravu odpovedi na otazky (prvni spolecna, druha oborova)
+    - napsat pouze relevantni informace
+	- musi to mit nejakou strukturu - 1 souvisla myslenka misto 50 nahodnych
+	    - dokaze, ze tomu skutecne rozumime
+	- otazky v obalce nejsou primo ten okruh na courses - muze to byt jakakoliv podcast toho
+	    - napriklad misto sitovani pouze NAT
+2) po 40 min drijde tajemnik
+3) prijdu do mistnosti, kde sedi 5 lidi
+4) obhajoba zaverecne prace + 2 lide z komise budou hodnotit moje odpovedi na otazky prubezne
+    - 7 min na prezentaci prace -> vyzkouset odprezentovat
+	    - lepsi skoncit driv nez pozdeji, aby nas neukoncili a nechybel konec
+		- driv koncit se smi
+	- idealni je odprezentovat svoji praci vedoucimu
+5) precteni 2 posudku
+    a) vedouci - hodnoti, jak dobre jsme prubezne pracovali
+	    - pokud nedorazi, tak posudek precte nekdo jiny
+		- posudek nemusi byt cten cely - staci vytah
+	b) oponent - precte svuj posudek
+	    - pokud nedorazi, tak posudek precte nekdo jiny
+	    - nasledne ma moznost polozit dotazy
+	-> 2 navrzene znamky - vetsinou je to nejaky prumer z techto znamek
+6) zakldni diskuse s komisi (necetli praci)
+7) 5 - 10 min konzultace se 2 zkousejicimi k otazkam
+8) predseda komise nas pozada at odejdeme, aby mohla probehnout diskuse ke znamkam
+    - znamka z obhajoby (vychazi z navrzenych)
+    - znamka ze spolecnych otazek
+    - znamka z oborovych otazek
+    - vysledna znamka ze skouseni - prumer z predchozich (muze se prihlednout k tomu jesli lepsi/horsi znamka)
+9) bakalarka, zkouseni, a vazeny prumer za cele studium vytvori vazenym prumerem vyslednou znamku
+    - na cerveny diplom nesmi byt horsi znamka nez B ze skouseni prumer do 1,5 ze studia -> 3000 kc
+
+
+
+
+PREZENTACE
+A) Co jsme delali, hlavni prinos
+B) Dekuji za pozornost a nejaky obrazek, na kterem bude prezentace lezet
+C) Dotazy od oponenta s odpovedmi
+Chybou je struktura cele prace
+Vizualizace jsou zadane
+Pokud je cilu hodne - precist vsechny, ale je mozne se zamerit pouze na nektere
+STRUKTURA
+Úvodní stránka – min. název práce, jméno autora práce, jméno vedoucího práce
+Definice cíle(ů) bakalářské práce
+Motivace výběru tématu bakalářské práce
+Vymezení odborných termínů a zkratek – na uvážení studenta (dle cílové skupiny publika) o nepovinné – pouze v případě existence specifických/neznámých pojmů/zkratek
+Současný stav řešení problému – pokud je důležitý pro pochopení řešení zvoleného studentem či je hlavním výstupem práce (rešeršní typ práce)
+Řešení problému, které student zvolil (předpokládaný či již známý výsledek praktické části práce) o vhodná je vizualizace vašeho řešení a výstupů práce (screenshoty, grafy, tabulky, důležité výpisy kódů, apod.)
+Závěr – shrnutí důležitých bodů prezentace, přínos vašeho řešení, případné výhled do budoucna o stačí pouze nástin závěru, nemusí se jednat o finální závěr. Pripadne, jak se da navazat.
+Poděkování za pozornost, následuje diskuse
+
+
+
+beamer sablona
+	- uvodni slide
+		- jmeno prace
+		- moje jmeno
+        - datum prace - nechceme datum kompilace, ale prezentace
+		- nempsat zbytecne informace (vedouci, oponent, katedra, obor)
+
+	- includegraphics - neni potreba figure (samotny slide uz je prostredi)
+	- beamer theme matrix - vyber stylu
+    - minted pro vkladani kodu potrebuje nepovinny parametr fragile
+        - exampleblock/alertblock/ je ctverecek okolo
+    - section a subsection pro obsah, kterym se lze navigovat (pokud mam spravnou sablonu)
+    - coumns - prostredi, ktere umoznuje zobrazovat veci vedle sebe
+    - itemize - prostredi vytvarejici bodove seznamy
+        - pause - prikaz, umozni nezobrazit vse najednou, ale animacemi
+        - pripadne spicate zavorky urci krok, kde se bod zobrazi
+        - uncover - prikaz, ktery specifikuje kroky, kde se zobrazi (lze vyuzivat i na obrazky a jine objekty)
+        - pripadne nepovinny argument umozni krokovani celeho seznamu
+        - setbeamercovered{transparent} - skryte body jsou pouze zasedle
+    - setbeamertemplate{navigation symbols}{} - odstrani navigaci vpravo dole
+    - documentclass nepovinny parametr - lze stanovit aspectratio (16:9 - nejbeznejsi pomer monitoru)
+    - note - prikaz, ktery umozni poznamky pro prednasejiciho
+        - setbeameroption{show notes on second screen=right} - potreba na zacatku nastavit
+        - neni vetsinou prohlizecu podporovane
+    - nepovinny parametr dokumentu, ktery umoznuje tisknout jenom nektere slidy - napr. handout
+        - u slidu potom <handout>

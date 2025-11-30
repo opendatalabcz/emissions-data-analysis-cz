@@ -1,0 +1,13 @@
+1)
+je adam sazbo externista
+kde najit data z mereni emisi -> stihnu dodelat tento semestr?
+BI-BPR, BI-TDP, BI-BAP mam si uz ted zapsat
+muzeme komunitkovat pres teams
+
+2) PROJIT PRVNI SCHUZI ZAPISKY PRED DRUHOU
+poslat ramcovy obsah
+vytvorit zadani a nasledne schvalit
+# psat promenne cesky / anglicky
+mit kod v jupyter notebooku lze nebo spis velke zdrojaky
+jak moc mam popisovat v praci skript a ziskani dat - kapitola / dat jen do priloh
+preference k citacim / autroske forme

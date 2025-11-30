@@ -1,0 +1,18 @@
+Zpracování a analýza záznamů z emisních kontrol
+
+MOTIVACE - TED JE POPULARNI TEMA, ATD. - BYLA KOLEM TOHO VEREJNA DISKUZE
+VYUZITI VEREJNE DOSTUPNYCH DAT
+MINISTERSTVO DELALO ZAKAZKU PRED PAR LETY
+
+
+Cílem bakalářské práce je analýza dat z jednotlivých emisních kontrol vozidel OD ROKU XXXX v České republice. Data pocházejí z otevřených zdrojů Ministerstva dopravy dostupných skrze Portál o datech. Práce se zaměří na detekci anomálií, tvorbu interpretovatelného modelu predikujícího výsledky jednotlivých kontrol emisí a identifikaci agregovaných trendů. 2 VETY ZE VYSLEDKEM JE REPORT, KDE SE BUDOU DATA AKTUALIZOVAT AUTOMATICKY; OD ROKU 2018 BERU DATA
+
+
+V BODECH - ZISKANI DAT, ANALYZA, VYBER MODELU, ANALYZA ANOMALII, GRAFICKE ZOBRAZENI
+V teoretické části bude popsána problematika měření emisí, legislativní rámec a přehled metod používaných pro analýzu anomálií a trendů. Praktická část se zaměří na automatizované získání dat, jejich zpracování, vyčištění, aplikaci vhodných analytických metod a prezentaci výsledků prostřednictvím webové platformy. Celý proces zpracování bude automatizovaný a tudíž způsobilý poskytovat aktuální výsledky i dále do budoucna.
+
+TOTO UZ NEDAVAT
+Výstupem bude soubor přehledných vizualizací a analytických výstupů, které umožní veřejnosti i odborným institucím lépe porozumět vývoji emisí vozidel v ČR a identifikovat oblasti vyžadující pozornost
+
+
+LITERATURA JAKO LINK

@@ -1,0 +1,14 @@
+arxiv.org
+dspace.cvut.cz - prevzit zdroje
+    - posudek ohodnocuje kvalitu prace (projit posudky pro vyvarovani se stejnych chyb)
+domenove vyhledavani - https://www.google.com/advanced_search?hl=en-CZ&fg=1
+akademicke socialni site - ResearchGate, Academia.edu
+google scholar
+https://cvut.summon.serialssolutions.com/#!/
+    - boolovska logika
+    - vyhledavat pouze v abstraktu
+https://knihovna.cvut.cz/katalogy-a-databaze/prehled-databazi/katalog-informacnich-zdroju
+consensus
+litmaps
+
+citacni manazer - CitacePro

@@ -1,0 +1,67 @@
+PODROBNE V TDP CVICENI 5, 6
+
+Uvodni cast - psat neosobne
+    - abstrakt
+    - klicova slova
+    - seznam zkratek
+    - uvod - 1 - 1,5 strany (jeset se necisluje)
+          - pozvanka ke cteni BP
+                - zdureznani aktualnosti problematiky
+          - vymezuje tematiku - rict i co neresim
+          - vyznam a prospesnost pro spolecnost - komu to k necemu bude
+          - proc se tim zaobiram - proc jsem si to vybral
+                - akademicka motivace ne osobni
+          - zamereni prace - muze obsahovat cile, pokud by byly kratke
+                - zasazeni tematu BP do souvislosti
+          - predstaveni struktury prace
+                - cemu se prace bude venovat v teoreticke cesti
+                - jak budou tyto poznatky vyuzite v prakticke casti
+          - navaznost na jine bakalrske prace, projekty, studie, vyzkumy, ...
+    - cil prace
+          - pouzivat cile, ktere jsou overitelne (ne jako zamyslet se, projit literaturu)
+
+Teoreticka cast
+    - mereni emisi
+          - definice pojmu z mereni emisi
+                - zakon
+          - analyza problematiky mereni emisi
+    - analyza anomalii
+          - definice pojmu z analyzy anomalii
+          - vytyceni zakladich postupu analyzi anomalii (cerpat z predchozi analyzy emisi)
+    - formulace trendu (ML model)
+          - popis algoritmu, ktere maji dobrou interpretovatelnost
+          - srovnat metody pro dany ukol - vicekriteralni analyza
+                - forma tabulky vhodna pro jednoznacnou srovnatelnost metod
+    - tvorba webove aplikace
+          - analyza prehlednych aplikaci pro verejnost
+          - srovnani technologii
+
+Prakticka cast
+    - ziskani dat
+          - skript na stazeni dat - pokud ho popisuju, tak dat primo do prace, jinak do prilohy
+                - skript dela toto
+                - problemy jsou toto
+                - pokud by ho nekdo chtel pouzit, tak takto
+          - stazena data do prilohy (byla zvetsena kapacita)
+    - predzpracovani dat
+          - analyza priznaku v datasetu
+          - analyza outlieru
+          - doplneni chybejicich hodnot
+          - sjednoceni jednotlivych datasetu
+    - analyza dat
+          - hledani anomalii
+                - vyuziti metod z prakticke casti
+          - tvorba modelu
+    - tvorba webove aplikace
+          - napojeni na stavajici systemy opendata lab
+          - pouzita technologie
+          - struktura aplikace
+          - zvoleni vhodne vizualizace
+    - zhodnoceni vysledku
+          - formulace doporuceni pro statni spravu
+
+Prinos prace
+    - zhodnoceni praktickeho prinosu webove aplikace pro verejnost
+    - zopakovani doporuceni pro statni spravu
+
+

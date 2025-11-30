@@ -1,0 +1,18 @@
+Surove:
+https://md.gov.cz/getattachment/Ministerstvo/Zadost-o-poskytnuti-informace-(1)/Poskytnute-informace/Vyhodnoceni-analyzy-dat-ISTP-ze-SME/Technicka-zprava-Vyhodnoceni-analyzy-dat-ISTP-ze-SME-(4192917937).pdf.aspx
+    https://md.gov.cz/Ministerstvo/Zadost-o-poskytnuti-informace-(1)/Poskytnute-informace/Vyhodnoceni-analyzy-dat-ISTP-ze-SME?returl=/Ministerstvo/Zadost-o-poskytnuti-informace-(1)/Poskytnute-informace
+http://hdl.handle.net/10467/114771
+https://www.e-sbirka.cz/sb/2018/211?zalozka=text
+
+
+Info:
+Standardni je davat citace na konec odstavce
+Citace pred teckou - vztahuje se pouze k vete.
+Pri vyctu nedavat citaci na konec radku pred vyctem.
+Od knihovny si lze vyzadat pristup k placenym souborum
+Google scholar umoznuje generovat automaticke citace
+BibTeX entry from url
+Pokud neni majitel webu jasny, tak lze dat spravce (napr CVUT)
+Pokud neni datum vydani jasne, tak lze dat aktualni datum.
+Citace obrazku napr. ziskano z webu [1]
+	funguje elektronicky i tistene

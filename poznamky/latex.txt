@@ -1,0 +1,23 @@
+electronic x printed - u printed odsazeno jinak a kapitola zacina na liche
+je lepsi pouzivat u obrazku light mode -> mensi kontrast
+zkratky vysvetlovat - 1. kde ji pouzijeme, 2. v seznamu zkratek
+rozdeleni prace na jednotlive soubory zrychluje kompilaci a prehlednost
+    - pripadne lze zakomentovat ostatni kapitoly
+aby predlozky nezustavaly na konci lze pouzit xevlna balicek (pro lualatex existuje luavlna)
+    - jeste vylepsuje zalamovani ceskych slov
+nedelitelne mezery je potreba resit manualne u pripadu jako % a citaci (nelze mit citaci na dalsi)
+prostredi verbatim slouzi k doslovnemu vysazeni
+    - v balicku minted existuje prostreni listing, ktere mi umoznuje obalit verbatim a pridat treba label a caption
+prostredi minted zvyraznuje kod - nevyhoda je, ze potrebuji python s konkretnim balickem a kompilace trva dele
+pokud chci aby neco bylo konkretne siroke vuci necemu, tak lze napr 0.7\textwidth
+balicek array umoznuje centrovat v tabulce i na vysku
+balicek pdflscape = pdf landscape pridava prostredi landscape, ktery da stranku na sirku
+balicek longtable pridava moznost misto prostredi tabular pouzit prostredi longtable, ktere zalomi tabulku na konci stranky\
+matematicke vyrazy se obaluji $
+prostredi equation to i ocisluje
+balicek subcaption umoznuje seskupit obrazky k sobe -> figure + subfigure
+dalsi uzitecna prostredi:
+    - definition
+    - remark
+    - figure
+catption ma nepovinny parametr, ktery predstavuje kratky popis do seznamu kodu / obrazku
