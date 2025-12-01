@@ -13,6 +13,10 @@ Jeden osdtavec neni kapitola/podkapitola - v jende je vice odstavcu
 Neosobni forma prace lze pouzit vzdy
 Dat na konec muj linkedin
 
+STARE ZADANI
+    V BODECH - ZISKANI DAT, ANALYZA, VYBER MODELU, ANALYZA ANOMALII, GRAFICKE ZOBRAZENI
+    V teoretické části bude popsána problematika měření emisí, legislativní rámec a přehled metod používaných pro analýzu anomálií a trendů. Praktická část se zaměří na automatizované získání dat, jejich zpracování, vyčištění, aplikaci vhodných analytických metod a prezentaci výsledků prostřednictvím webové platformy. Celý proces zpracování bude automatizovaný a tudíž způsobilý poskytovat aktuální výsledky i dále do budoucna.
+
 
 UDELANO:
 dokumentace generovana pomoci AI
