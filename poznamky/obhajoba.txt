@@ -1,12 +1,15 @@
 Lide v komisi krome vedouciho a oponenta necetli -> dulezita je vizualni stranka
 Pouzivat anglicka ustalena slova jako framework
 Prinest flashku - z ni to bude prezentovano - idealne pdf
-Prezentuji praktickou ne teoretickou cast
+    - lze poslat den predem prezentaci tajemnikovi
+    - v ucebnach je akrobat
+Prezentuji praktickou ne teoretickou cast - teoreticka cast je na openentovi a vedoucim
 Lze zahrnout dulezite casti kodu
 2 casti zkousky - obhajoba, zkouseni -> lze neudelat jen jednu z nich (nelze ale opakovat jen jednu otazku)
 statnice v cervnu - opravny termin na zkouseni - srpen/zari -> lze nasoupit na magistra
 	- opravny termin na obhajobu - zimni semestr
-Prezentaci posilam az vecer pred obhajobou tejemnikovi, abych ji nemusel nosit na flashce
+Nedavat do prezentace zdroje
+
 
 STRUKTURA
 1) potitko - 40 min na pripravu odpovedi na otazky (prvni spolecna, druha oborova)
@@ -28,7 +31,7 @@ STRUKTURA
 		- posudek nemusi byt cten cely - staci vytah
 	b) oponent - precte svuj posudek
 	    - pokud nedorazi, tak posudek precte nekdo jiny
-	    - nasledne ma moznost polozit dotazy
+	    - nasledne ma moznost polozit dotazy - reakce na dotazy v me prezentaci az po dekuji za pozornost
 	-> 2 navrzene znamky - vetsinou je to nejaky prumer z techto znamek
 6) zakldni diskuse s komisi (necetli praci)
 7) 5 - 10 min konzultace se 2 zkousejicimi k otazkam
