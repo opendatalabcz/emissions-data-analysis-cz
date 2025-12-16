@@ -37,16 +37,19 @@
 % sage: changes layout so it matches SAGELAB screen size
 % colour: color theme of the presentation - options are orange (default) or blue
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\documentclass[czech]{ctufit-presentation}
+\documentclass[czech,blue]{ctufit-presentation}
 
 \usepackage[backend=biber]{biblatex}
+\usepackage{caption} % MINE
 \addbibresource{data.bib}
 
-\ctufittitle{Název prezentace}
-\ctufitsubtitle{Podnadpis prezentace} % Remove the command if you do not want a subtitle on the title slide.
-\ctufitauthor{Author Authorovič} % Remove the command if you do not want the author on the title slide.
-\ctufitdate{\today} % Remove the command if you do not want the date on the title slide.
-\ctufitinstitute{FIT CVUT} % Remove the command if you do not want the institution on the title slide.
+\ctufittitle{Zpracování a analýza záznamů z emisních kontrol vozidel v České republice}
+\ctufitsubtitle{Vedoucí práce: Mgr. Adam Szabó} % Remove the command if you do not want a subtitle on the title slide.
+\ctufitauthor{Autor: Adam Prokop} % Remove the command if you do not want the author on the title slide.
+\ctufitinstitute{FIT ČVUT} % Remove the command if you do not want the institution on the title slide.
+\ctufitdate{17. prosince 2025} % Remove the command if you do not want the date on the title slide.
+
+
 
 \begin{document}
 
@@ -55,68 +58,233 @@
 \end{frame}
 
 \begin{frame}
-	\frametitle{Nadpis}
+	\frametitle{Struktura}
 	\tableofcontents
 \end{frame}
 
 %=============================================================================================
 
-\section{Úvod}
+\section{Cíle práce}
 \begin{frame}
-	\frametitle{Slide}
-	\framesubtitle{Bodový seznam}
+	\frametitle{Cíle}
 	\begin{itemize}
-		\item První bod
-			\begin{itemize}
-				\item podbod
-				\item druhý podbod
-			\end{itemize}
-		\item Druhý bod
-			\begin{enumerate}
-				\item bod 1
-			\end{enumerate}
-		\item Třetí bod
-			\begin{description}
-				\item[Výzkum] \dots aneb vědecká honba za poznáním
-			\end{description}
+		\item Detekce anomálií v záznamech emisních kontrol
+		\item Vytvoření modelu pravděpodobnosti úspěchu kontroly
+		\item Analýza agregovaných trendů v čase
+		\item Vizualizace výsledků přehlednou formou
 	\end{itemize}
 \end{frame}
 
-\subsection{Text}
-\begin{frame}[nobg]
-	\frametitle{Slide bez pozadí}
-	Tento slide nemá žádné pozadí.
+\section{Motivace výběru tématu}
+\begin{frame}
+	\frametitle{Motivace}
+	\begin{itemize}
+		\item Přispění do veřejné diskuse
+		\item Aktualizace předchozí analýzy Ministerstva dopravy
+		\begin{figure}
+            \includegraphics[width=\linewidth]{images/predchozi_analyza.png} 
+			\captionsetup{justification=raggedright,singlelinecheck=false,font=scriptsize}
+			\caption{Předchozí analýza emisí}
+        \end{figure}
+	\end{itemize}
 \end{frame}
 
-\subsection{Bloky}
-\begin{frame}
-	\frametitle{Bloky}
-	\begin{definition}[Pozdrav]
-		Hello World!
-	\end{definition}
+\section{Praktická část práce}
+\subsection{Získání dat}
+\begin{frame}[fragile]
+	\frametitle{Praktická část}
+	\framesubtitle{Získání dat}
+	\begin{enumerate}
+		\item Lokalizace relevantních datasetů na \href{https://data.gov.cz/}{data.gov.cz}
+		\begin{figure}
+			\vfill
+            \includegraphics[width=\linewidth]{images/portal_o_datech.png} 
+			\captionsetup{justification=raggedright,singlelinecheck=false,font=scriptsize}
+			\caption{Portál o datech}
+        \end{figure}
+	\end{enumerate}
+\end{frame}
 
-	\begin{alertblock}{Chyba.}
-		Něco zde nefunguje.
-	\end{alertblock}
+\begin{frame}[fragile]
+	\frametitle{Praktická část}
+	\framesubtitle{Získání dat}
+	\begin{enumerate}
+		\setcounter{enumi}{1}
+		\item Automatické stažení dat přes SPARQL endpoint
+			\begin{itemize}
+				\item Denní členění – tisíce záznamů
+				\item XML formát – přes 150 GB dat
+			\end{itemize}
+	\end{enumerate}
+	{\scriptsize
+		\begin{verbatim}
+			SELECT ?title ?downloadURL 
+			WHERE {{
+				<{parent_dateset_iri}> dcat:seriesMember ?dataset.
+				?dataset dcat:distribution ?distribution.
+				?dataset dcterms:title ?title.
+				?distribution dcat:downloadURL ?downloadURL.
+				FILTER(LANG(?title) = "cs")
+			}}
+		\end{verbatim}
+	}
+	\begin{figure}
+		\includegraphics[width=\linewidth]{images/sparql_data_z_mericich_pristroju.png} 
+		\captionsetup{justification=raggedright,singlelinecheck=false,font=scriptsize}
+		\caption{Dokumentace datasetu ve SPARQL}
+	\end{figure}
+\end{frame}
 
-	\begin{exampleblock}{Správně!}
-		Toto je lepší.
-	\end{exampleblock}
+\subsection{Analýza a čištění dat}
+\begin{frame}[fragile]
+	\frametitle{Praktická část}
+	\framesubtitle{Analýza a čištění dat}
+	\begin{enumerate}
+		\item Extrakce informací z XML do parquet formátu
+	\end{enumerate}
+	{\tiny
+		\begin{verbatim}
+			<DatumProhlidky>2022-08-27</DatumProhlidky>
+			<Stanice>
+				<Cislo>3237</Cislo>
+			</Stanice>
+			<CasoveUdaje>
+				<Zahajeni>2022-08-27T11:58:54.0870000+02:00</Zahajeni>
+				<Ukonceni>2022-08-27T12:05:37.3870000+02:00</Ukonceni>
+			</CasoveUdaje>
+			<OdpovednaOsoba>49493</OdpovednaOsoba>
+			<PristrojData>
+				<prohlidka cisloProtokolu="CZ-003237-22-08-0921"
+				datumProhlidky="2022-08-27T12:05:00">
+					<mericiPristroj vyrobce="ACTIA CZ s.r.o." typ="AT505" verze="-"
+					OBD="R+OBD" verzeSoftware="3.05.3"/>
+				</prohlidka>
+				<vozidlo>
+					<VIN>WF0MXXGCDM6M38271</VIN>
+					<tovazniZnacka>FORD</tovazniZnacka>
+					<typVozidla>FOCUS C-MAX</typVozidla>
+					<typMotoru>HWDA</typMotoru>
+					<cisloMotoru>-</cisloMotoru>
+					<stavTachometru>151057</stavTachometru>
+					<rokVyroby>2006</rokVyroby>
+					<datumPrvniRegistrace>2006-08-28</datumPrvniRegistrace>
+					<palivo>BA</palivo>
+				</vozidlo>
+			. . .
+		\end{verbatim}
+	}
+\end{frame}
 
+\begin{frame}[fragile]
+	\frametitle{Praktická část}
+	\framesubtitle{Analýza a čištění dat}
+	\begin{enumerate}
+		\setcounter{enumi}{1}
+		\item Uložení do samostatných souborů po dnech
+			\begin{itemize}
+				\item Nižší nároky na operační paměť
+			\end{itemize}
+		{\tiny
+			\begin{verbatim}
+				prohlidky_Prohlídky vozidel STK a SME za 01-01-2019.parquet
+				prohlidky_Prohlídky vozidel STK a SME za 02-01-2019.parquet
+				prohlidky_Prohlídky vozidel STK a SME za 03-01-2019.parquet
+				prohlidky_Prohlídky vozidel STK a SME za 04-01-2019.parquet
+				prohlidky_Prohlídky vozidel STK a SME za 05-01-2019.parquet
+				prohlidky_Prohlídky vozidel STK a SME za 06-01-2019.parquet
+				prohlidky_Prohlídky vozidel STK a SME za 07-01-2019.parquet
+				prohlidky_Prohlídky vozidel STK a SME za 07-01-2019.parquet
+				. . .
+			\end{verbatim}
+		}
+		\item Načtení do polars
+		{\scriptsize
+			\begin{verbatim}
+				lazy_df = pl.scan_parquet(
+					"data/parquet/prohlidky/*.parquet",
+					schema=prohlidky_schema
+				)
+			\end{verbatim}
+		}
+		\item Vyřešení nekonzistencí po obsahové stránce dat
+		\item Rozdělení vozidel podle typu pohonu
+	\end{enumerate}
+\end{frame}
+
+\subsection{Detekce anomálií}
+\begin{frame}[fragile]
+	\frametitle{Praktická část}
+	\framesubtitle{Detekce anomálií}
+	\begin{enumerate}
+		\item Využití statistických metod pro detekci anomálií
+			\begin{itemize}
+				\item Metody nesupervizovaného učení
+				\item Inspirace postupy aplikovanými v analýze MDČR
+			\end{itemize}
+		\item Vyhledání podezřelých hodnot na základě identity záznamů
+	\end{enumerate}
+	\begin{table}
+		\includegraphics[width=\linewidth]{images/duplicitni_hodnoty.png} 
+		\captionsetup{justification=raggedright,singlelinecheck=false,font=scriptsize}
+		\caption{Předchozí diskuse na x.com}
+	\end{table}
+\end{frame}
+
+\subsection{Vytvoření modelu}
+\begin{frame}[fragile]
+	\frametitle{Praktická část}
+	\framesubtitle{Model pravděpodobnosti úspěchu}
+	\begin{enumerate}
+		\item Agregace informací z více datasetů na základě VIN
+		\item Natrénování několika modelů a výběr nejvýkonnějšího
+		\item Analýza důležitosti příznaků
+	\end{enumerate}
+\end{frame}
+
+\subsection{Analýza tredů v čase}
+\begin{frame}[fragile]
+	\frametitle{Praktická část}
+	\framesubtitle{Trendy}
+	\begin{enumerate}
+		\item Analýza změn vybraných ukazatelů v čase
+		\item Predikce vývoje do budoucna
+	\end{enumerate}
+\end{frame}
+
+\subsection{Vizualizace na webových stránkách}
+\begin{frame}[fragile]
+	\frametitle{Praktická část}
+	\framesubtitle{Prezentace výsledků}
+	\begin{enumerate}
+		\item Zakomponování výsledků do existujících webových stránek
+			\begin{itemize}
+				\item Diplomová práce ing. Daniela Brotze
+				\item Zobrazuje zajmavé infografiky související s měřením na STK
+				\item Poskutuje predikci výsledku příští technické kontroly
+			\end{itemize}
+	\end{enumerate}
+	\begin{figure}
+		\includegraphics[width=\linewidth]{images/STK_portal.png}
+		\captionsetup{justification=raggedright,singlelinecheck=false,font=scriptsize}
+		\caption{Aktuální verze STK portálu}
+	\end{figure}
+\end{frame}
+
+\section{Závěr}
+\begin{frame}[fragile]
+	\frametitle{Závěr}
+	\begin{itemize}
+		\item Automatizované zpracování a vizualizace skutečných dat
+			\begin{itemize}
+				\item V reálném čase
+				\item Původní forma pro laiky nepoužitelná
+			\end{itemize}
+		\item Identifikace podezřelých stanic
+		\item Lepší porozumění trendům
+	\end{itemize}
 \end{frame}
 
 \begin{plainFrame}[colourbg]
 	\plainFrameText{Děkuji za pozornost}
 \end{plainFrame}
-
-\begin{plainFrame}
-	\begin{center}
-		\includegraphics[height=0.9\paperheight]{images/template/cvut-lion-blue.png}	
-	\end{center}
-\end{plainFrame}
-
-\begin{frame}
-	\frametitle{Otázky?}
-\end{frame}
-
 \end{document}
