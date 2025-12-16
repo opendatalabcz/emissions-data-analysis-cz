@@ -17,7 +17,6 @@ _minted-ctufit-presentation/
 *.run.xml
 *.synctex.gz
 *.toc
-ctufit-presentation.pdf
 pdfa.xmpi
 ctufit-presentation.xdv
 *-SAVE-ERROR
