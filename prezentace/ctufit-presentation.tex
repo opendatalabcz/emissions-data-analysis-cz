@@ -1,0 +1,122 @@
+%% This is the ctufit-presentation document class. It is used to produce presentations for Czech Technical University, Faculty of Information Technology students and employees.
+%%
+%% This is version 1.0.1, built 7. 8. 2025.
+%% 
+%% Get the newest version from
+%% https://gitlab.fit.cvut.cz/theses-templates/FITpresentation-LaTeX/
+%%
+%%
+%% Copyright 2025, Tomas Novacek
+%%
+%% This work may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either version 1.3
+%% of this license or (at your option) any later version.
+%% The latest version of this license is in
+%%  https://www.latex-project.org/lppl.txt
+%% and version 1.3 or later is part of all distributions of LaTeX
+%% version 2005/12/01 or later.
+%%
+%% This work has the LPPL maintenance status `maintained'.
+%%
+%% The current maintainer of this work is Tomas Novacek (novacto3@fit.cvut.cz).
+%% Alternatively, submit bug reports to the tracker at
+%% https://gitlab.fit.cvut.cz/theses-templates/FITpresentation-LaTeX/issues
+%%
+%%
+
+% arara: xelatex
+% arara: biber
+% arara: xelatex
+% arara: xelatex
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CLASS OPTIONS
+% language: czech/english/slovak%
+% nobg: removes lion background image
+% nonumber: removes page numbers from the sidebar
+% sage: changes layout so it matches SAGELAB screen size
+% colour: color theme of the presentation - options are orange (default) or blue
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[czech]{ctufit-presentation}
+
+\usepackage[backend=biber]{biblatex}
+\addbibresource{data.bib}
+
+\ctufittitle{Název prezentace}
+\ctufitsubtitle{Podnadpis prezentace} % Remove the command if you do not want a subtitle on the title slide.
+\ctufitauthor{Author Authorovič} % Remove the command if you do not want the author on the title slide.
+\ctufitdate{\today} % Remove the command if you do not want the date on the title slide.
+\ctufitinstitute{FIT CVUT} % Remove the command if you do not want the institution on the title slide.
+
+\begin{document}
+
+\begin{frame}[plain,t]
+	\titlepage
+\end{frame}
+
+\begin{frame}
+	\frametitle{Nadpis}
+	\tableofcontents
+\end{frame}
+
+%=============================================================================================
+
+\section{Úvod}
+\begin{frame}
+	\frametitle{Slide}
+	\framesubtitle{Bodový seznam}
+	\begin{itemize}
+		\item První bod
+			\begin{itemize}
+				\item podbod
+				\item druhý podbod
+			\end{itemize}
+		\item Druhý bod
+			\begin{enumerate}
+				\item bod 1
+			\end{enumerate}
+		\item Třetí bod
+			\begin{description}
+				\item[Výzkum] \dots aneb vědecká honba za poznáním
+			\end{description}
+	\end{itemize}
+\end{frame}
+
+\subsection{Text}
+\begin{frame}[nobg]
+	\frametitle{Slide bez pozadí}
+	Tento slide nemá žádné pozadí.
+\end{frame}
+
+\subsection{Bloky}
+\begin{frame}
+	\frametitle{Bloky}
+	\begin{definition}[Pozdrav]
+		Hello World!
+	\end{definition}
+
+	\begin{alertblock}{Chyba.}
+		Něco zde nefunguje.
+	\end{alertblock}
+
+	\begin{exampleblock}{Správně!}
+		Toto je lepší.
+	\end{exampleblock}
+
+\end{frame}
+
+\begin{plainFrame}[colourbg]
+	\plainFrameText{Děkuji za pozornost}
+\end{plainFrame}
+
+\begin{plainFrame}
+	\begin{center}
+		\includegraphics[height=0.9\paperheight]{images/template/cvut-lion-blue.png}	
+	\end{center}
+\end{plainFrame}
+
+\begin{frame}
+	\frametitle{Otázky?}
+\end{frame}
+
+\end{document}
