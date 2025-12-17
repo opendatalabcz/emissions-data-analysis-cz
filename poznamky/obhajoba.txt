@@ -67,6 +67,7 @@ POZNAMKY Z TDP PREZENTACE
 nemit ruce za zadama - pouzit ukazovatko na ukazovani
 pres 9 min
 necist seznamy - mohou tam byt, ale 1-2 vety je slidum
+    - mene slov v bodech
 
 smazat uvod
 redukovat cile - jenom vizualizace
