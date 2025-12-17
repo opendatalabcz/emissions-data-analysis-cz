@@ -63,6 +63,18 @@ Současný stav řešení problému – pokud je důležitý pro pochopení ře�
 Závěr – shrnutí důležitých bodů prezentace, přínos vašeho řešení, případné výhled do budoucna o stačí pouze nástin závěru, nemusí se jednat o finální závěr. Pripadne, jak se da navazat.
 Poděkování za pozornost, následuje diskuse
 
+POZNAMKY Z TDP PREZENTACE
+nemit ruce za zadama - pouzit ukazovatko na ukazovani
+pres 9 min
+necist seznamy - mohou tam byt, ale 1-2 vety je slidum
+
+smazat uvod
+redukovat cile - jenom vizualizace
+motivace do 1 vety
+neopakovat se v zaveru - rict neco zajmaveho, co me upoutalo (co jsem vyzkoumal)
+
+zvetsit zabulku na celou stranu
+
 
 
 beamer sablona
