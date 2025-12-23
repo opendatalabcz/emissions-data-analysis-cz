@@ -18,7 +18,7 @@ class Verbosity(IntEnum):
     NORMAL = 1
     VERBOSE = 2  
 
-def to_date(str):
+def str_to_date(str):
     """
     Převede textový řetězec data ve formátu 'DD-MM-YYYY' na objekt datetime.
 
@@ -32,6 +32,9 @@ def to_date(str):
         ValueError: Pokud vstupní řetězec neodpovídá formátu 'DD-MM-YYYY' nebo představuje neplatné datum (např. '30-02-2025').
     """
     return datetime.strptime(str, '%d-%m-%Y')
+
+def date_to_str(date):
+    
 
 
 def create_directory(dir_name, verbosity=Verbosity.QUIET):
@@ -74,4 +77,4 @@ def date_from_file_name(file_name):
     Raises:
         ValueError: Pokud extrahovaný řetězec data neodpovídá formátu očekávanému funkcí `to_date` (vyvoláno funkcí `to_date`).
     """
-    return to_date(str(file_name).split('.')[0].split(' ')[-1])
+    return str_to_date(str(file_name).split('.')[0].split(' ')[-1])

@@ -9,7 +9,7 @@ import pyarrow.parquet as pq
 from lxml import etree # type: ignore <- pylance milně hlásí chybu
 import requests
 
-from utils import create_directory, Verbosity, to_date, date_from_file_name
+from utils import create_directory, Verbosity, str_to_date, date_from_file_name
 
 
 def explain_verbosity(verbosity):
@@ -46,7 +46,7 @@ def get_url_addresses(sparql_endpoint, parent_dateset_iri, start_date, end_date,
     Raises:
         requests.exceptions.HTTPError: Pokud dojde k chybě HTTP během požadavku.
         requests.exceptions.RequestException: Obecná chyba požadavku, např. chyba připojení.
-        ValueError: Pokud `start_date` nebo `end_date` nejsou ve správném formátu nebo datum v názvu souboru není platné (vyvoláno funkcemi `to_date` a `date_from_file_name`).
+        ValueError: Pokud `start_date` nebo `end_date` nejsou ve správném formátu nebo datum v názvu souboru není platné (vyvoláno funkcemi `str_to_date` a `date_from_file_name`).
     """
     # Definice dotazu
     get_download_url_query = f'''
@@ -82,7 +82,7 @@ def get_url_addresses(sparql_endpoint, parent_dateset_iri, start_date, end_date,
     titles = []
     download_urls = []
     for title, download_url in zip(all_titles, all_download_urls):
-        if to_date(start_date) <= date_from_file_name(title) <= to_date(end_date):
+        if str_to_date(start_date) <= date_from_file_name(title) <= str_to_date(end_date):
             titles.append(title)
             download_urls.append(download_url)
     if verbosity > Verbosity.NORMAL:
