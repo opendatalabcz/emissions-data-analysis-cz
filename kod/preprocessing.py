@@ -543,7 +543,7 @@ if __name__ == '__main__':
     MEASUREMENTS_DIR = Path('kod/data/data_z_mericich_pristroju')
     PARENT_DATASET_MEASUREMENTS = 'https://data.gov.cz/zdroj/datové-sady/66003008/e8e07fa264f3bd2179be03381ec324de'
     START_DATE = '01-01-2019'
-    END_DATE = '31-12-2024'
+    END_DATE = None #'31-12-2024'
     NO_DOWNLOAD_THREADS = 30
     MAX_DOWNLOAD_ATTEMPTS = 10
     NO_EXTRACT_THREADS = 30
