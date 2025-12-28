@@ -220,8 +220,7 @@ def safe_get(element, xpath, namespaces):
 def safe_find(element, xpath, namespaces):
     if element is None:
         return None
-    node = element.find(xpath, namespaces)
-    return node if node is not None else None
+    return element.find(xpath, namespaces)
 
 
 def get_stanice(element, prefix, namespaces):

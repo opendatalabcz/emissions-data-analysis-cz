@@ -22,3 +22,5 @@ STARE ZADANI
 
 UDELANO:
 dokumentace generovana pomoci AI
+nesedi dokumentace k XML viz merici pristroje stanice
+struktura dat zjistovana pomoci pruzkumu vsech souboru - definice XML nebyla rigorozni
