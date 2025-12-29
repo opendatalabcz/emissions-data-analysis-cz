@@ -16,6 +16,17 @@ def explain_verbosity(verbosity):
     if verbosity == Verbosity.NORMAL:
         print('"."\t- provedení operace se souborem\n"-"\t- přeskočení souboru\n n \t- číslo pokusu o provedení operace\n')
 
+
+def skip_file(file, verbosity):
+    if file.exists():
+        if verbosity > Verbosity.NORMAL:
+            print(f'Přeskakuji soubor "{file.stem}", již zpracován.')
+        elif verbosity > Verbosity.QUIET:
+            print('-', end='', flush=True)
+        return True
+    return False
+
+
 #--------------------------------------------------------------------------------------------------------------
 
 def downloaded_dates(directories):
@@ -95,19 +106,10 @@ def download_file(title, download_url, target_dir, max_attempts, verbosity):
     path = target_dir / (title + '.xml.gz')
 
     # Kontrola, zda už soubor není uložen
-    if path.exists():
-        if verbosity > Verbosity.NORMAL:
-            print(f'Přeskakuji soubor "{title}", již existuje.')
-        elif verbosity > Verbosity.QUIET:
-            print('-', end='', flush=True)
+    if skip_file(path, verbosity):
         return
     
     # Samotné stažení souboru
-    if verbosity > Verbosity.NORMAL:
-        print(f'Stahuji: "{title}".')
-    elif verbosity > Verbosity.QUIET:
-        print('.', end='', flush=True)
-
     for attempt in range(max_attempts):
         try:
             with requests.get(download_url, stream=True, timeout=60) as response:
@@ -115,7 +117,14 @@ def download_file(title, download_url, target_dir, max_attempts, verbosity):
                 with open(path, 'wb') as f: # Zápis do souboru po částech
                     for chunk in response.iter_content(chunk_size=8192): 
                         f.write(chunk)
+                        
+            if verbosity > Verbosity.NORMAL:
+                print(f'Stahuji: "{title}".')
+            elif verbosity > Verbosity.QUIET:
+                print('.', end='', flush=True)
+
             return
+
         except requests.exceptions.RequestException as e:
             if verbosity > Verbosity.NORMAL:
                 print(f'Chyba při dotazu na stahovaní souboru "{title}": {e}.')
@@ -160,27 +169,16 @@ def extract_file(file_name, source_dir, target_dir, verbosity, delete):
     destination_file_path = (target_dir / file_name).with_suffix('')
 
     # Kontrola, zda vyextrahovaný soubor již existuje
-    if destination_file_path.is_file():
+    if not skip_file(destination_file_path, verbosity):
+        # Samotná extrakce souboru
+        with gzip.open(source_file_path, 'rb') as f_in:
+            with open(destination_file_path, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out) # type: ignore <- pylance milně hlásí chybu
+
         if verbosity > Verbosity.NORMAL:
-            print(f'Přeskakuji soubor "{file_name}", již vyextrahován.')
+            print(f'Extrahuji: "{file_name}".')
         elif verbosity > Verbosity.QUIET:
-            print('-', end='', flush=True)
-        
-        # Smazání původního souboru
-        if delete:
-            delete_path(source_file_path, verbosity)
-
-        return
-
-    # Samotná extrakce souboru
-    if verbosity > Verbosity.NORMAL:
-        print(f'Extrahuji: "{file_name}".')
-    elif verbosity > Verbosity.QUIET:
-        print('.', end='', flush=True)
-
-    with gzip.open(source_file_path, 'rb') as f_in:
-        with open(destination_file_path, 'wb') as f_out:
-            shutil.copyfileobj(f_in, f_out) # type: ignore <- pylance milně hlásí chybu
+            print('.', end='', flush=True)
     
     # Smazání původního souboru
     if delete:
@@ -222,6 +220,26 @@ def safe_find(element, xpath, namespaces):
         return None
     return element.find(xpath, namespaces)
 
+
+def safe_findall(element, xpath, namespaces):
+    if element is None:
+        return None
+    return element.findall(xpath, namespaces)
+
+
+def safe_get_attribute(element, attribute_name):
+    if element is None:
+        return None
+    return element.get(attribute_name)
+
+
+def safe_index(list, index):
+    try:
+        return list[index]
+    except (TypeError, IndexError):
+        return None
+
+#--------------------------------------------------------------------------------------------------------------
 
 def get_stanice(element, prefix, namespaces):
     return {
@@ -404,84 +422,193 @@ def parse_prohlidka(element, namespaces):
 
     return prohlidka_record, zavady_records, ukony_records, adr_typy_records
 
+#--------------------------------------------------------------------------------------------------------------
 
-def write_batch(output_dir, batch_data, file_stem):
-    if not batch_data: return
+def get_poznamky(element, namespaces):
+    poznamky = safe_findall(element, 'm:poznamka', namespaces)
+    if poznamky is None:
+        return None
+    return '\n'.join(p.text for p in poznamky if p.text is not None)
+
+
+def get_result_attributes(element, prefix):
+    return {
+        f'{prefix}_Hodnota': safe_get_attribute(element, 'hodnota'),
+        f'{prefix}_Vysledek': safe_get_attribute(element, 'vysledek')
+    }
+
+
+def get_boundary_attributes(element, prefix):
+    return {
+        f'{prefix}_Hodnota': safe_get_attribute(element, 'hodnota'),
+        f'{prefix}_RucniZadani': safe_get_attribute(element, 'rucniZadani')
+    }
+
+
+def get_measured(element, prefix, namespaces):
+    min = safe_find(element, 'm:min', namespaces)
+    max = safe_find(element, 'm:max', namespaces)
+
+    attributes = get_result_attributes(element, prefix)
+    min_attributes = get_boundary_attributes(min, f'{prefix}_Min')
+    max_attributes = get_boundary_attributes(max, f'{prefix}_Max')
     
-    file_name = f"{file_stem}.parquet"
+    return attributes | min_attributes | max_attributes
+
+
+def get_monitor_attributes(element, prefix):
+    return {
+        f'{prefix}_Podporovano': safe_get_attribute(element, 'podporovano'),
+        f'{prefix}_Otestovano': safe_get_attribute(element, 'otestovano')
+    }
+
+
+def get_otacky_benzin(element, prefix, namespaces):
+    measured_list = ['CO', 'CO2', 'COCOOR', 'HC', 'LAMBDA', 'N', 'NOX', 'O2', 'TPS']
+    return {key: value for measured in measured_list for key, value in get_measured(safe_find(element, f'm:{measured}', namespaces), f'{prefix}_{measured}', namespaces).items()}
+
+
+def get_mereni_nafta(element, prefix, namespaces):
+    measured_list = [('Tps', 'TPS'), ('CasAkcelerace', 'casAkcelerace'), ('Kourivost', 'kourivost'), ('OtackyPrebehove', 'otackyPrebehove'), ('OtackyVolnobezne', 'otackyVolnobezne'), ('Teplota', 'teplota'), ('TlakKomory', 'tlakKomory'), ('TeplotaKomory', 'teplotaKomory')]
+    return {key: value for col_name, element_name in measured_list for key, value in get_measured(safe_find(element, f'm:{element_name}', namespaces), f'{prefix}_{col_name}', namespaces).items()}
+
+
+def get_detail_benzin(element, prefix, namespaces):
+    result = {}
+    result[f'{prefix}_Palivo'] = safe_get_attribute(element, 'palivo')
+    benzin_vyusteni_element_list = safe_findall(element, 'm:vyusteni', namespaces)
+    for i in range(4):
+        benzin_vyusteni_element = safe_index(benzin_vyusteni_element_list, i)
+        result.update(get_otacky_benzin(safe_find(benzin_vyusteni_element, 'm:otackyVolnobezne', namespaces), f'{prefix}_Vyusteni{i}_OtackyVolnobezne', namespaces))
+        result.update(get_otacky_benzin(safe_find(benzin_vyusteni_element, 'm:otackyZvysene', namespaces), f'{prefix}_Vyusteni{i}_OtackyZvysene', namespaces))
+    return result
+
+
+def get_detail_nafta(element, namespaces):
+    result = {}
+    result['Nafta_Palivo'] = safe_get_attribute(element, 'palivo')
+
+    mereni_vznet_limit_element = safe_find(element, 'm:mereniVznetLimit', namespaces)
+    limits_list = [('Tps', 'TPS'), ('CasAkcelerace', 'casAkcelerace'), ('Kourivost', 'kourivost'), ('KourivostRozpeti', 'kourivostRozpeti'), ('OtackyPrebehove', 'otackyPrebehove'), ('OtackyVolnobezne', 'otackyVolnobezne')]
+    for col_name, element_name in limits_list:
+        limit_element = safe_find(mereni_vznet_limit_element, f'm:{element_name}', namespaces)
+        result.update(get_boundary_attributes(safe_find(limit_element, 'm:min', namespaces), f'Nafta_{col_name}_Min'))
+        result.update(get_boundary_attributes(safe_find(limit_element, 'm:max', namespaces), f'Nafta_{col_name}_Max'))
+
+    nafta_vyusteni_element_list = safe_findall(element, 'm:vyusteni', namespaces)
+    for i in range(4):
+        nafta_vyusteni_element = safe_index(nafta_vyusteni_element_list, i)
+        nafta_mereni_prumer_element = safe_find(nafta_vyusteni_element, 'm:mereniPrumer', namespaces)
+        result.update(get_mereni_nafta(nafta_mereni_prumer_element, f'Nafta_Vyusteni{i}_MereniPrumer', namespaces))
+        nafta_mereni_element_list = safe_findall(nafta_vyusteni_element, 'm:mereni', namespaces)
+        for j in range(4):
+            nafta_mereni_element = safe_index(nafta_mereni_element_list, j)
+            result.update(get_mereni_nafta(nafta_mereni_element, f'Nafta_Vyusteni{i}_Mereni{j}', namespaces))
+
+    return result
     
-    # Zapsání souboru na disk v požadovaném formátů
-    df = pd.DataFrame(batch_data)
-    table = pa.Table.from_pandas(df, preserve_index=False)
-    pq.write_table(table, output_dir / file_name)
+
+def get_detail_plyn(element, namespaces):
+    result = get_detail_benzin(element, 'Plyn', namespaces)
+
+    nadrz_plyn_element = safe_find(safe_find(element, 'm:kontrolaNadrzi', namespaces), 'm:nadrz', namespaces)
+    result['Plyn_Nadrz_Vyrobce'] = safe_get_attribute(nadrz_plyn_element, 'vyrobce')
+    result['Plyn_Nadrz_Homologace'] = safe_get_attribute(nadrz_plyn_element, 'homologace')
+    result['Plyn_Nadrz_Zivotnost'] = safe_get_attribute(nadrz_plyn_element, 'zivotnost')
+    result['Plyn_Nadrz_Kontrola'] = safe_get_attribute(nadrz_plyn_element, 'kontrola')
+
+    return result
 
 
-def parse_inspections_file(inspections_dir, defects_dir, actions_dir, adr_type_dir, xml_file, namespaces, verbosity, delete):
-    file_name = xml_file.stem
+def parse_mereni(element, namespaces):
+    emise_record = {}
+    emise_record['CisloProtokolu'] = safe_get(element, 'm:CisloProtokolu', namespaces)
+    emise_record['DatumProhlidky'] = safe_get(element, 'm:DatumProhlidky', namespaces)
+    emise_record['StaniceCislo'] = safe_get(safe_find(element, 'm:Stanice', namespaces), 'm:Cislo', namespaces)
+    emise_record['Zahajeni'] = safe_get(safe_find(element, 'm:CasoveUdaje', namespaces), 'm:Zahajeni', namespaces)
+    emise_record['Ukonceni'] = safe_get(safe_find(element, 'm:CasoveUdaje', namespaces), 'm:Ukonceni', namespaces)
+    emise_record['OdpovednaOsoba'] = safe_get(element, 'm:OdpovednaOsoba', namespaces)
 
-    # Kontrola, zda vyextrahovaný soubor již existuje
-    if (inspections_dir / file_name).with_suffix('.parquet').is_file():
-        if verbosity > Verbosity.NORMAL:
-            print(f'Přeskakuji soubor "{file_name}", již vyextrahován.')
-        elif verbosity > Verbosity.QUIET:
-            print('-', end='', flush=True)
-            
-        # Smazání původního souboru
-        if delete:
-            delete_path(xml_file, verbosity)
+    pristroj_data_element = safe_find(element, 'm:PristrojData', namespaces)
+    prohlidka_element = safe_find(pristroj_data_element, 'm:prohlidka', namespaces)
+    emise_record['Prohlidka_CisloProtokolu'] = safe_get_attribute(prohlidka_element, 'cisloProtokolu')
+    emise_record['Prohlidka_DatumProhlidky'] = safe_get_attribute(prohlidka_element, 'datumProhlidky')
 
-        return
+    merici_pristroj_element = safe_find(prohlidka_element, 'm:mericiPristroj', namespaces)
+    emise_record['MericiPristroj_Vyrobce'] = safe_get_attribute(merici_pristroj_element, 'vyrobce')
+    emise_record['MericiPristroj_Typ'] = safe_get_attribute(merici_pristroj_element, 'typ')
+    emise_record['MericiPristroj_Verze'] = safe_get_attribute(merici_pristroj_element, 'verze')
+    emise_record['MericiPristroj_OBD'] = safe_get_attribute(merici_pristroj_element, 'OBD')
+    emise_record['MericiPristroj_VerzeSoftware'] = safe_get_attribute(merici_pristroj_element, 'verzeSoftware')
 
-    # Seznamy, které budou obsahovat naparsované části XML
-    prohlidky_batch = []
-    zavady_batch = []
-    ukony_batch = []
-    adr_typy_batch = []
-    
-    # Načtení celého stromu do paměti a identifikace elementu DatovyObsah
-    tree = etree.parse(xml_file)
-    datovy_obsah = tree.find(f'd:DatovyObsah', namespaces)
-    if datovy_obsah is None or len(datovy_obsah) == 0:
-        raise KeyError(f'V souboru "{xml_file}" chybí element DatovyObsah')
-    prohlidka_seznam_element = datovy_obsah[0]
+    emise_record['Poznamky'] = get_poznamky(prohlidka_element, namespaces)
 
-    # Postupné načtení a zprasování všech prohlídek
-    for element in prohlidka_seznam_element.iterchildren(tag=f'{{{namespaces['p']}}}Prohlidka'):
-        prohlidka_record, zavady_records, ukony_records, adr_typy_records = parse_prohlidka(element, namespaces)
-        
-        if prohlidka_record:
-            prohlidky_batch.append(prohlidka_record)
-            zavady_batch.extend(zavady_records)
-            ukony_batch.extend(ukony_records)
-            adr_typy_batch.extend(adr_typy_records)
-        
-        # Smazáni elementu z paměti pro vyšší efektivitu
-        element.clear()
+    vozidlo_element = safe_find(pristroj_data_element, 'm:vozidlo', namespaces)
+    emise_record['Vozidlo_Vin'] = safe_get(vozidlo_element, 'm:VIN', namespaces)
+    emise_record['Vozidlo_Znacka'] = safe_get(vozidlo_element, 'm:tovazniZnacka', namespaces)
+    emise_record['Vozidlo_ObchodniOznaceni'] = safe_get(vozidlo_element, 'm:typVozidla', namespaces)
+    emise_record['Vozidlo_TypMotoru'] = safe_get(vozidlo_element, 'm:typMotoru', namespaces)
+    emise_record['Vozidlo_CisloMotoru'] = safe_get(vozidlo_element, 'm:cisloMotoru', namespaces)
+    emise_record['Vozidlo_Odometer'] = safe_get(vozidlo_element, 'm:stavTachometru', namespaces)
+    emise_record['Vozidlo_RokVyroby'] = safe_get(vozidlo_element, 'm:rokVyroby', namespaces)
+    emise_record['Vozidlo_DatumPrvniRegistrace'] = safe_get(vozidlo_element, 'm:datumPrvniRegistrace', namespaces)
+    emise_record['Vozidlo_Palivo'] = safe_get(vozidlo_element, 'm:palivo', namespaces)
 
-    # Explicitní uvolnění celého stromu z paměti
-    del tree
-    
-    # Zapsání souborů na disk
-    if verbosity > Verbosity.NORMAL:
-        print(f'Zapisuji vyparsované parquet soubory ze: "{file_name}".')
-    elif verbosity > Verbosity.QUIET:
-        print('.', end='', flush=True)
+    vysledek_mereni_element = safe_find(pristroj_data_element, 'm:vysledekMereni', namespaces)
+    emise_record['Vysledek_VisualniKontrola'] = safe_get_attribute(vysledek_mereni_element, 'vysledekVisualniKontroly')
+    emise_record['Vysledek_Readiness'] = safe_get_attribute(vysledek_mereni_element, 'vysledekReadiness')
+    emise_record['Vysledek_RidiciJednotka'] = safe_get_attribute(vysledek_mereni_element, 'vysledekRidiciJednotka')
+    emise_record['Vysledek_RidiciJednotkaStav'] = safe_get_attribute(vysledek_mereni_element, 'vysledekRidiciJednotkaStav')
+    emise_record['Vysledek_Mil'] = safe_get_attribute(vysledek_mereni_element, 'vysledekMIL')
+    emise_record['Vysledek_TesnostPlynovehoZarizeni'] = safe_get_attribute(vysledek_mereni_element, 'vysledekTesnostPlynovehoZarizeni')
 
-    write_batch(inspections_dir, prohlidky_batch, file_name)
-    write_batch(defects_dir, zavady_batch, file_name)
-    write_batch(actions_dir, ukony_batch, file_name)
-    write_batch(adr_type_dir, adr_typy_batch, file_name)
+    vyhovuje_element = safe_find(vysledek_mereni_element, 'm:vyhovuje', namespaces)
+    emise_record['Vysledek_Vyhovuje'] = 'true' if vyhovuje_element is not None else None
+    emise_record['PristiProhlidka'] = safe_get_attribute(vyhovuje_element, 'pristiProhlidka')
 
-    # Smazání původního souboru
-    if delete:
-        delete_path(xml_file, verbosity)
-    
+    emisni_system_element = safe_find(pristroj_data_element, 'm:emisniSystem', namespaces)
+    rizeny_obd_element = safe_find(emisni_system_element, 'm:rizenyOBD', namespaces)
+    rizeny_element = safe_find(emisni_system_element, 'm:rizeny', namespaces)
+    nerizeny_element = safe_find(emisni_system_element, 'm:nerizeny', namespaces)
+    emise_record['EmisniSystem'] = "Rizeny_Obd" if rizeny_obd_element is not None else "Rizeny" if rizeny_element is not None else "Nerizeny" if nerizeny_element is not None else None
+    emise_record['Obd_KomunikacniProtokol'] = safe_get(rizeny_obd_element, 'm:komunikacniProtokol', namespaces)
+    emise_record['Obd_Vin'] = safe_get(rizeny_obd_element, 'm:VIN', namespaces)
+    emise_record['Obd_PocetDtc'] = safe_get(rizeny_obd_element, 'm:pocetDTC', namespaces) if not None else safe_get(rizeny_element, 'm:pocetDTC', namespaces)
+    emise_record['Obd_VzdalenostDtc'] = safe_get(rizeny_obd_element, 'm:vzdalenostDTC', namespaces)
+    emise_record['Obd_CasDtc'] = safe_get(rizeny_obd_element, 'm:casDTC', namespaces)
+    emise_record['Obd_KontrolaMil'] = safe_get(rizeny_obd_element, 'm:kontrolaMIL', namespaces)
+
+    readiness_element = safe_find(rizeny_obd_element, 'm:readiness', namespaces)
+    emise_record['Obd_Readiness_Vysledek'] = safe_get_attribute(readiness_element, 'vysledek')
+
+    all_monitors = [
+        ('Zazeh', 'OBDzazeh', ['AC', 'CAT-FUNC', 'COMP', 'EGR-VVT', 'EVAP', 'FUEL', 'HCAT', 'MISF', 'O2S-FUNC', 'O2S-HEAT', 'SAS']),
+        ('Vznet', 'OBDvznet', ['AC', 'BOOST', 'COMP', 'DPF', 'EGR-VVT', 'EGS', 'FUEL', 'MISF', 'NMHC', 'NOX', 'RESERVE']),
+        ('J1939', 'J1939', ['AC', 'BOOST', 'CAT-FUNC', 'COLD', 'COMP', 'DPF', 'EGR-VVT', 'EGS-FUNC', 'EGS-HEAT', 'EVAP', 'FUEL', 'HCAT', 'MISF', 'NM-HC', 'NOX', 'SAS'])
+    ]
+    for col_name, element_name, monitor_list in all_monitors:
+        parent = safe_find(readiness_element, f'm:{element_name}', namespaces)
+        prefix = f'Obd_Readiness_{col_name}'
+        emise_record.update({key: value for monitor in monitor_list for key, value in get_monitor_attributes(safe_find(parent, f'm:{monitor}', namespaces), f'{prefix}_{monitor}').items()})
+
+    detail_benzin_element = safe_find(pristroj_data_element, 'm:detailBenzin', namespaces)
+    emise_record.update(get_detail_benzin(detail_benzin_element, 'Benzin', namespaces))
+
+    detail_nafta_element = safe_find(pristroj_data_element, 'm:detailNafta', namespaces)
+    emise_record.update(get_detail_nafta(detail_nafta_element, namespaces))
+
+    detail_plyn_element = safe_find(pristroj_data_element, 'm:detailPlyn', namespaces)
+    emise_record.update(get_detail_plyn(detail_plyn_element, namespaces))
+
+    return emise_record
+
+#--------------------------------------------------------------------------------------------------------------
 
 def parse_to_parquet(source_dir, file_parser, no_threads, verbosity, delete):
     # Vyhledání souborů pro parsování
     xml_files = sorted(list(source_dir.glob('*.xml')), key=date_from_file_path)
-    if not xml_files:
-        raise FileNotFoundError(f'Žádně .xml souborů nebyly nalezeny v {source_dir}.')
+    # if not xml_files:
+    #     raise FileNotFoundError(f'Žádně .xml soubory nebyly nalezeny v {source_dir}.')
     if verbosity > Verbosity.QUIET:
         print(f'Nalezeno {len(xml_files)} .xml souborů. Spouštím {no_threads} vláken.')
 
@@ -505,13 +632,75 @@ def parse_to_parquet(source_dir, file_parser, no_threads, verbosity, delete):
     # Smazání zdrojového repozitáře
     if delete:
         delete_path(source_dir, verbosity)
+
+
+def write_batch(output_dir, batch_data, file_stem):
+    if not batch_data: return
     
+    file_name = f"{file_stem}.parquet"
+    
+    # Zapsání souboru na disk v požadovaném formátů
+    df = pd.DataFrame(batch_data)
+    table = pa.Table.from_pandas(df, preserve_index=False)
+    pq.write_table(table, output_dir / file_name)
+
+#--------------------------------------------------------------------------------------------------------------
+
+def parse_inspections_file(inspections_dir, defects_dir, actions_dir, adr_type_dir, xml_file, namespaces, verbosity, delete):
+    target_path = (inspections_dir / xml_file.stem).with_suffix('.parquet')
+
+    # Kontrola, zda rozparsovaný soubor již existuje
+    if not skip_file(target_path, verbosity):
+        # Seznamy, které budou obsahovat naparsované části XML
+        prohlidky_batch = []
+        zavady_batch = []
+        ukony_batch = []
+        adr_typy_batch = []
+        
+        # Načtení celého stromu do paměti a identifikace elementu DatovyObsah
+        tree = etree.parse(xml_file)
+        datovy_obsah = tree.find(f'd:DatovyObsah', namespaces)
+        if datovy_obsah is None or len(datovy_obsah) == 0:
+            raise KeyError(f'V souboru "{xml_file}" chybí element DatovyObsah')
+        prohlidka_element_list = datovy_obsah[0]
+
+        # Postupné načtení a zprasování všech prohlídek
+        for element in prohlidka_element_list.iterchildren(tag=f'{{{namespaces['p']}}}Prohlidka'):
+            prohlidka_record, zavady_records, ukony_records, adr_typy_records = parse_prohlidka(element, namespaces)
+            
+            if prohlidka_record:
+                prohlidky_batch.append(prohlidka_record)
+                zavady_batch.extend(zavady_records)
+                ukony_batch.extend(ukony_records)
+                adr_typy_batch.extend(adr_typy_records)
+            
+            # Smazáni elementu z paměti pro vyšší efektivitu
+            element.clear()
+
+        # Explicitní uvolnění celého stromu z paměti
+        del tree
+        
+        # Zapsání souborů na disk
+        write_batch(inspections_dir, prohlidky_batch, xml_file.stem)
+        write_batch(defects_dir, zavady_batch, xml_file.stem)
+        write_batch(actions_dir, ukony_batch, xml_file.stem)
+        write_batch(adr_type_dir, adr_typy_batch, xml_file.stem)
+
+        if verbosity > Verbosity.NORMAL:
+            print(f'Zapisuji vyparsované parquet soubory ze: "{xml_file.stem}".')
+        elif verbosity > Verbosity.QUIET:
+            print('.', end='', flush=True)
+
+    # Smazání původního souboru
+    if delete:
+        delete_path(xml_file, verbosity)
+
 
 def parse_inspections_to_parquet(dataset_dir, inspections_subdir, defects_subdir, actions_subdir, adr_type_subdir, no_threads, verbosity, delete=True):
     # Definice jmenných prostorů
     namespaces = {
-    'p': 'istp:opendata:schemas:ProhlidkaSeznam:v1', 
-    'd': 'istp:opendata:schemas:DatovaSada:v1'      
+        'p': 'istp:opendata:schemas:ProhlidkaSeznam:v1', 
+        'd': 'istp:opendata:schemas:DatovaSada:v1'      
     }
 
     # Nastavení repozitárů
@@ -531,15 +720,71 @@ def parse_inspections_to_parquet(dataset_dir, inspections_subdir, defects_subdir
     inspections_parser = lambda xml_file: parse_inspections_file(inspections_dir, defects_dir, actions_dir, adr_type_dir, xml_file, namespaces, verbosity, delete)
     parse_to_parquet(dataset_dir / 'xml', inspections_parser, no_threads, verbosity, delete)
 
+#--------------------------------------------------------------------------------------------------------------
 
-# def parse_measurements_to_parquet():
+def parse_measurements_file(target_dir, xml_file, namespaces, verbosity, delete):
+    target_path = (target_dir / xml_file.stem).with_suffix('.parquet')
 
+    # Kontrola, zda rozparsovaný soubor již existuje
+    if not skip_file(target_path, verbosity):
+        mereni_batch = []
+        
+        # Načtení celého stromu do paměti a identifikace elementu DatovyObsah
+        tree = etree.parse(xml_file)
+        datovy_obsah = tree.find(f'd:DatovyObsah', namespaces)
+        if datovy_obsah is None or len(datovy_obsah) == 0:
+            raise KeyError(f'V souboru "{xml_file}" chybí element DatovyObsah')
+        mereni_element_list = datovy_obsah[0]
+
+        # Postupné načtení a zprasování všech prohlídek
+        for element in mereni_element_list.iterchildren(tag=f'{{{namespaces['m']}}}Mereni'):
+            mereni_record = parse_mereni(element, namespaces)
+            
+            if mereni_record:
+                mereni_batch.append(mereni_record)
+            
+            # Smazáni elementu z paměti pro vyšší efektivitu
+            element.clear()
+
+        # Explicitní uvolnění celého stromu z paměti
+        del tree
+        
+        # Zapsání souborů na disk
+        write_batch(target_dir, mereni_batch, xml_file.stem)
+        if verbosity > Verbosity.NORMAL:
+            print(f'Zapisuji vyparsované parquet soubory ze: "{xml_file.stem}".')
+        elif verbosity > Verbosity.QUIET:
+            print('.', end='', flush=True)
+
+    # Smazání původního souboru
+    if delete:
+        delete_path(xml_file, verbosity)
+
+
+def parse_measurements_to_parquet(dataset_dir, measurements_subdir, no_threads, verbosity, delete=True):
+    # Definice jmenných prostorů
+    namespaces = {
+        'm': 'istp:opendata:schemas:MereniSeznam:v1', 
+        'd': 'istp:opendata:schemas:DatovaSada:v1'      
+    }
+
+    # Nastavení repozitárů
+    parquet_dir = dataset_dir / 'parquet'
+    measurements_dir = parquet_dir / measurements_subdir
+    create_directory(measurements_dir, verbosity)
+
+    # Zavolání funcke pro provedení parsování
+    measurements_parser = lambda xml_file: parse_measurements_file(measurements_dir, xml_file, namespaces, verbosity, delete)
+    parse_to_parquet(dataset_dir / 'xml', measurements_parser, no_threads, verbosity, delete)
+
+#--------------------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
     # Definice konstant
     INSPECTIONS_DIR = Path('kod/data/prohlidky_vozidel_stk_a_sme')
     PARENT_DATASET_INSPECTIONS = 'https://data.gov.cz/zdroj/datové-sady/66003008/9c95ebdba1dc7a2fbcfc5b6c07d25705'
     MEASUREMENTS_DIR = Path('kod/data/data_z_mericich_pristroju')
+    # MEASUREMENTS_DIR = Path('kod/data/data_z_mericich_pristroju/data_z_mericich_pristoroju')
     PARENT_DATASET_MEASUREMENTS = 'https://data.gov.cz/zdroj/datové-sady/66003008/e8e07fa264f3bd2179be03381ec324de'
     START_DATE = '01-01-2019'
     END_DATE = None #'31-12-2024'
@@ -551,7 +796,8 @@ if __name__ == '__main__':
     DEFECTS_SUBDIR = 'zavady'
     ACTIONS_SUBDIR = 'ukony'
     ADR_TYPE_SUBDIR = 'adr_typy'
-    NO_PARSE_THREADS = 8
+    MEASUREMENTS_SUBDIR = 'mereni'
+    NO_PARSE_THREADS = 16
 
 
     explain_verbosity(VERBOSITY)
@@ -561,6 +807,7 @@ if __name__ == '__main__':
     extract_files(INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
     parse_inspections_to_parquet(INSPECTIONS_DIR, INSPECTIONS_SUBDIR, DEFECTS_SUBDIR, ACTIONS_SUBDIR, ADR_TYPE_SUBDIR, NO_PARSE_THREADS, VERBOSITY)
 
-    downloaded_measurement_dates = downloaded_dates([MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml'])#, INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR])
+    downloaded_measurement_dates = downloaded_dates([MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_SUBDIR])
     download_files(MEASUREMENTS_DIR / 'gz', PARENT_DATASET_MEASUREMENTS, START_DATE, END_DATE, downloaded_measurement_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
     extract_files(MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
+    parse_measurements_to_parquet(MEASUREMENTS_DIR, MEASUREMENTS_SUBDIR, NO_PARSE_THREADS, VERBOSITY, False)

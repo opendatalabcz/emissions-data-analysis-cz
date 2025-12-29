@@ -44,3 +44,4 @@ def date_from_file_path(file_path):
 
 def date_from_file_name(file_name):
     return str_to_date(file_name.split('.')[0].split(' ')[-1])
+
