@@ -797,7 +797,7 @@ if __name__ == '__main__':
     ACTIONS_SUBDIR = 'ukony'
     ADR_TYPE_SUBDIR = 'adr_typy'
     MEASUREMENTS_SUBDIR = 'mereni'
-    NO_PARSE_THREADS = 16
+    NO_PARSE_THREADS = 8
 
 
     explain_verbosity(VERBOSITY)
