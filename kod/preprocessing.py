@@ -639,7 +639,7 @@ def write_batch(output_dir, batch_data, file_stem):
     
     file_name = f"{file_stem}.parquet"
     
-    # Zapsání souboru na disk v požadovaném formátů
+    # Zapsání souboru na disk v požadovaném formátu
     df = pd.DataFrame(batch_data)
     table = pa.Table.from_pandas(df, preserve_index=False)
     pq.write_table(table, output_dir / file_name)
