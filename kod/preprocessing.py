@@ -1,7 +1,8 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 import gzip
 import shutil
 from pathlib import Path
+from functools import partial
 
 import pandas as pd
 import pyarrow as pa
@@ -10,6 +11,7 @@ from lxml import etree # type: ignore <- pylance milně hlásí chybu
 import requests
 
 from utils import create_directory, Verbosity, str_to_date, date_from_file_path, date_from_file_name, delete_path
+from schemas import mereni_key_to_id
 
 
 def explain_verbosity(verbosity):
@@ -477,7 +479,7 @@ def get_detail_benzin(element, prefix, namespaces):
     result = {}
     result[f'{prefix}_Palivo'] = safe_get_attribute(element, 'palivo')
     benzin_vyusteni_element_list = safe_findall(element, 'm:vyusteni', namespaces)
-    for i in range(4):
+    for i in range(3):
         benzin_vyusteni_element = safe_index(benzin_vyusteni_element_list, i)
         result.update(get_otacky_benzin(safe_find(benzin_vyusteni_element, 'm:otackyVolnobezne', namespaces), f'{prefix}_Vyusteni{i}_OtackyVolnobezne', namespaces))
         result.update(get_otacky_benzin(safe_find(benzin_vyusteni_element, 'm:otackyZvysene', namespaces), f'{prefix}_Vyusteni{i}_OtackyZvysene', namespaces))
@@ -496,7 +498,7 @@ def get_detail_nafta(element, namespaces):
         result.update(get_boundary_attributes(safe_find(limit_element, 'm:max', namespaces), f'Nafta_{col_name}_Max'))
 
     nafta_vyusteni_element_list = safe_findall(element, 'm:vyusteni', namespaces)
-    for i in range(4):
+    for i in range(3):
         nafta_vyusteni_element = safe_index(nafta_vyusteni_element_list, i)
         nafta_mereni_prumer_element = safe_find(nafta_vyusteni_element, 'm:mereniPrumer', namespaces)
         result.update(get_mereni_nafta(nafta_mereni_prumer_element, f'Nafta_Vyusteni{i}_MereniPrumer', namespaces))
@@ -614,7 +616,7 @@ def parse_to_parquet(source_dir, file_parser, no_threads, verbosity, delete):
 
     # Samotně paralelní parsování souborů
     futures = []
-    with ThreadPoolExecutor(max_workers=no_threads) as executor:
+    with ProcessPoolExecutor(max_workers=no_threads) as executor:
         # Poslání úkolů do poolu
         for xml_file in xml_files:
             future = executor.submit(file_parser, xml_file)
@@ -634,13 +636,15 @@ def parse_to_parquet(source_dir, file_parser, no_threads, verbosity, delete):
         delete_path(source_dir, verbosity)
 
 
-def write_batch(output_dir, batch_data, file_stem):
+def write_batch(output_dir, batch_data, file_stem, mapping=None):
     if not batch_data: return
     
     file_name = f"{file_stem}.parquet"
     
     # Zapsání souboru na disk v požadovaném formátu
     df = pd.DataFrame(batch_data)
+    if mapping is not None:
+        df.rename(columns=mapping, inplace=True)
     table = pa.Table.from_pandas(df, preserve_index=False)
     pq.write_table(table, output_dir / file_name)
 
@@ -716,8 +720,18 @@ def parse_inspections_to_parquet(dataset_dir, inspections_subdir, defects_subdir
     create_directory(actions_dir, verbosity)
     create_directory(adr_type_dir, verbosity)
 
+    # Vytvoření partial funkce pro podporu serializace
+    inspections_parser = partial(
+        parse_inspections_file,
+        inspections_dir,
+        defects_dir,
+        actions_dir,
+        adr_type_dir,
+        namespaces=namespaces,
+        verbosity=verbosity,
+        delete=delete
+    )
     # Zavolání funcke pro provedení parsování
-    inspections_parser = lambda xml_file: parse_inspections_file(inspections_dir, defects_dir, actions_dir, adr_type_dir, xml_file, namespaces, verbosity, delete)
     parse_to_parquet(dataset_dir / 'xml', inspections_parser, no_threads, verbosity, delete)
 
 #--------------------------------------------------------------------------------------------------------------
@@ -750,7 +764,7 @@ def parse_measurements_file(target_dir, xml_file, namespaces, verbosity, delete)
         del tree
         
         # Zapsání souborů na disk
-        write_batch(target_dir, mereni_batch, xml_file.stem)
+        write_batch(target_dir, mereni_batch, xml_file.stem, mereni_key_to_id)
         if verbosity > Verbosity.NORMAL:
             print(f'Zapisuji vyparsované parquet soubory ze: "{xml_file.stem}".')
         elif verbosity > Verbosity.QUIET:
@@ -773,8 +787,15 @@ def parse_measurements_to_parquet(dataset_dir, measurements_subdir, no_threads, 
     measurements_dir = parquet_dir / measurements_subdir
     create_directory(measurements_dir, verbosity)
 
+    # Vytvoření partial funkce pro podporu serializace
+    measurements_parser = partial(
+        parse_measurements_file,
+        measurements_dir,
+        namespaces=namespaces,
+        verbosity=verbosity,
+        delete=delete
+    )
     # Zavolání funcke pro provedení parsování
-    measurements_parser = lambda xml_file: parse_measurements_file(measurements_dir, xml_file, namespaces, verbosity, delete)
     parse_to_parquet(dataset_dir / 'xml', measurements_parser, no_threads, verbosity, delete)
 
 #--------------------------------------------------------------------------------------------------------------
@@ -797,17 +818,19 @@ if __name__ == '__main__':
     ACTIONS_SUBDIR = 'ukony'
     ADR_TYPE_SUBDIR = 'adr_typy'
     MEASUREMENTS_SUBDIR = 'mereni'
-    NO_PARSE_THREADS = 8
+    NO_PARSE_PROCESSES = 4
 
 
     explain_verbosity(VERBOSITY)
 
+    print('——————————————————————————————————PROHLÍDKY VOZIDEL STK A SME:——————————————————————————————————\n')
     downloaded_inspection_dates = downloaded_dates([INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR])
     download_files(INSPECTIONS_DIR / 'gz', PARENT_DATASET_INSPECTIONS, START_DATE, END_DATE, downloaded_inspection_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
     extract_files(INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
-    parse_inspections_to_parquet(INSPECTIONS_DIR, INSPECTIONS_SUBDIR, DEFECTS_SUBDIR, ACTIONS_SUBDIR, ADR_TYPE_SUBDIR, NO_PARSE_THREADS, VERBOSITY)
+    parse_inspections_to_parquet(INSPECTIONS_DIR, INSPECTIONS_SUBDIR, DEFECTS_SUBDIR, ACTIONS_SUBDIR, ADR_TYPE_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY)
 
+    print('\n——————————————————————————————————DATA Z MĚŘÍCÍCH PŘÍSTROJŮ:——————————————————————————————————\n')
     downloaded_measurement_dates = downloaded_dates([MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_SUBDIR])
     download_files(MEASUREMENTS_DIR / 'gz', PARENT_DATASET_MEASUREMENTS, START_DATE, END_DATE, downloaded_measurement_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
     extract_files(MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
-    parse_measurements_to_parquet(MEASUREMENTS_DIR, MEASUREMENTS_SUBDIR, NO_PARSE_THREADS, VERBOSITY, False)
+    parse_measurements_to_parquet(MEASUREMENTS_DIR, MEASUREMENTS_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)

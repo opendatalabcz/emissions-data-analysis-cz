@@ -1,2 +1,34 @@
 automaticke stazeni a zpracovani stanic stk a sme
 cast datatype strict false
+ukladani v id forme a nasledne prevedeni zpet
+popsat nekonzistence v datech
+    - OBD_Readiness neodpovidajici typu paliva
+    - Prazdne protokoly - ma pohon na jednu vec pro vic veci
+dostat rozparsovane do pozadovaneho formatu
+
+
+
+
+
+
+
+DONE:
+sparql
+multiprocessing, multithreading
+parsing
+
+
+
+
+UKAZAT:
+nesmyslne zaznamy
+typy protokolu - J u zazehovych
+podivam se do metodiky
+low_memory
+ukladani s kartsimi nazvy
+sloupce jako plyn zivotnost
+size_gb
+jak postupovat s vyustenim
+pametova narocnost
+nakladni vozidla u nafty resit?
+actia redundantni udaje

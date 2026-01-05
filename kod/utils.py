@@ -29,12 +29,12 @@ def create_directory(dir_name, verbosity):
 
 def delete_path(path, verbosity):
     if path.is_dir():
-        if verbosity > Verbosity.NORMAL:
-            print(f'Mažu: "{path.name}".')
+        if verbosity > Verbosity.QUIET:
+            print(f'Mažu: "{path}".')
         path.rmdir()
     else:
-        if verbosity > Verbosity.QUIET:
-            print(f'Mažu: "{path.name}".')
+        if verbosity > Verbosity.NORMAL:
+            print(f'Mažu: "{path}".')
         path.unlink()
 
 
