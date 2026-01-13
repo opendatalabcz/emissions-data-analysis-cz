@@ -59,3 +59,30 @@ dalsi prace
    - migrace na github
    - eda
    - zakladni pipeline na model - metriky stejne jako diplomka
+
+
+4.
+pred zacatkem textu strukturu kapitol a podkapitol napsat - napsat na teams
+ECHO pokud bych chtel nazor
+kapitola datova kvalita v bakalarce
+dat si metodiku do GPT
+zkontrolovat zda se vyfuky lisi
+padnas profiling na cele
+zkusit nahrat cele na colab
+rict, ze jsem si rozdelil vznet a zazeh jako predchozi analyza
+MUSIM KAZDE SVE ROZHODNUTI OBHAJIT
+
+korelace zda auto projde + uspesnost
+	uspesnost pruchodu + podezrela stanice <- zda je jedna stanice v kraji na tom vyrazne lepe
+podivat se zda auto co selhalo slo jinam
+prezentace v quarto
+
+nejdrive dotahnout naftu do konce
+jenom osobaky resit -> co by se dalo rozsirit napisu
+udelat diagram zpracovani do prace
+
+nejak vyresit elektricke hybridy
+
+vyresit auto predelane na plyn - vuci cemu se to pak meri
+
+pronajmout server
