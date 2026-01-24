@@ -3,6 +3,7 @@ import gzip
 import shutil
 from pathlib import Path
 from functools import partial
+from statistics import mean
 
 import pandas as pd
 import pyarrow as pa
@@ -10,8 +11,7 @@ import pyarrow.parquet as pq
 from lxml import etree # type: ignore <- pylance milně hlásí chybu
 import requests
 
-from utils import create_directory, Verbosity, str_to_date, date_from_file_path, date_from_file_name, delete_path
-from schemas import mereni_key_to_id
+from utils import create_directory, Verbosity, str_to_date, date_from_file_path, date_from_file_name, delete_path, floats_sublist, pad_list_with_none
 
 
 def explain_verbosity(verbosity):
@@ -225,7 +225,7 @@ def safe_find(element, xpath, namespaces):
 
 def safe_findall(element, xpath, namespaces):
     if element is None:
-        return None
+        return []
     return element.findall(xpath, namespaces)
 
 
@@ -428,34 +428,17 @@ def parse_prohlidka(element, namespaces):
 
 def get_poznamky(element, namespaces):
     poznamky = safe_findall(element, 'm:poznamka', namespaces)
-    if poznamky is None:
+    if len(poznamky) == 0:
         return None
     return '\n'.join(p.text for p in poznamky if p.text is not None)
 
 
-def get_result_attributes(element, prefix):
-    return {
-        f'{prefix}_Hodnota': safe_get_attribute(element, 'hodnota'),
-        f'{prefix}_Vysledek': safe_get_attribute(element, 'vysledek')
-    }
+def determine_result_attributes(element):
+    return (safe_get_attribute(element, 'hodnota'), safe_get_attribute(element, 'vysledek'))
 
 
-def get_boundary_attributes(element, prefix):
-    return {
-        f'{prefix}_Hodnota': safe_get_attribute(element, 'hodnota'),
-        f'{prefix}_RucniZadani': safe_get_attribute(element, 'rucniZadani')
-    }
-
-
-def get_measured(element, prefix, namespaces):
-    min = safe_find(element, 'm:min', namespaces)
-    max = safe_find(element, 'm:max', namespaces)
-
-    attributes = get_result_attributes(element, prefix)
-    min_attributes = get_boundary_attributes(min, f'{prefix}_Min')
-    max_attributes = get_boundary_attributes(max, f'{prefix}_Max')
-    
-    return attributes | min_attributes | max_attributes
+def determine_boundary_attributes(element):
+    return (safe_get_attribute(element, 'hodnota'), safe_get_attribute(element, 'rucniZadani'))
 
 
 def get_monitor_attributes(element, prefix):
@@ -465,59 +448,134 @@ def get_monitor_attributes(element, prefix):
     }
 
 
-def get_otacky_benzin(element, prefix, namespaces):
-    measured_list = ['CO', 'CO2', 'COCOOR', 'HC', 'LAMBDA', 'N', 'NOX', 'O2', 'TPS']
-    return {key: value for measured in measured_list for key, value in get_measured(safe_find(element, f'm:{measured}', namespaces), f'{prefix}_{measured}', namespaces).items()}
+# Inicializuje slovník listů, kde každá požadovaná hodnota představuje klíč
+def initialize_result_list(required_list, category_list, prefix):
+    result_lists = {}
+    for category in category_list:
+        for required in required_list:
+            if required[2]:
+                result_lists[f'{prefix}_{category}_{required[0]}_Min_Hodnota'] = []
+                result_lists[f'{prefix}_{category}_{required[0]}_Min_RucniZadani'] = []
+            if required[3]:
+                result_lists[f'{prefix}_{category}_{required[0]}_Max_Hodnota'] = []
+                result_lists[f'{prefix}_{category}_{required[0]}_Max_RucniZadani'] = []
+            result_lists[f'{prefix}_{category}_{required[0]}_Hodnota'] = []
+            result_lists[f'{prefix}_{category}_{required[0]}_Vysledek'] = []
+    return result_lists
 
 
-def get_mereni_nafta(element, prefix, namespaces):
-    measured_list = [('Tps', 'TPS'), ('CasAkcelerace', 'casAkcelerace'), ('Kourivost', 'kourivost'), ('OtackyPrebehove', 'otackyPrebehove'), ('OtackyVolnobezne', 'otackyVolnobezne'), ('Teplota', 'teplota'), ('TlakKomory', 'tlakKomory'), ('TeplotaKomory', 'teplotaKomory')]
-    return {key: value for col_name, element_name in measured_list for key, value in get_measured(safe_find(element, f'm:{element_name}', namespaces), f'{prefix}_{col_name}', namespaces).items()}
+# Vyplní slovník hodnotami z jednotlivých vyústění
+def fill_result_list(vyusteni_element_list, result_lists, required_list, categories, prefix, namespaces):
+    # Iterace přes vyústění
+    for vyusteni_element in vyusteni_element_list:
+        # Iterace přes kategorie ve vyústění (jako například otáčky volnoběžné x otáčky zvýšené)
+        for category, (category_xpath, repetitions) in categories.items():
+            # Doplnění kategorií do definovaného počtu - relevantní pro kategorii měření, kterých je více
+            category_element_list = pad_list_with_none(safe_findall(vyusteni_element, f'm:{category_xpath}', namespaces), repetitions)
+            for i, category_element in enumerate(category_element_list):
+                # Index kategorie pro rozlišení jednotlivých měření
+                category_id = ''
+                if repetitions != 1:
+                    category_id = str(i)
+                # Iterace přes požadované hodnoty na extrakci
+                for required in required_list:
+                    required_element = safe_find(category_element, f'm:{required[1]}', namespaces)
+                    if required[2]:
+                        hodnota, rucni_zadani = determine_boundary_attributes(safe_find(required_element, f'm:min', namespaces))
+                        if hodnota is not None: result_lists[f'{prefix}_{category}{category_id}_{required[0]}_Min_Hodnota'].append(hodnota)
+                        if rucni_zadani is not None: result_lists[f'{prefix}_{category}{category_id}_{required[0]}_Min_RucniZadani'].append(rucni_zadani)
+                    if required[3]:
+                        hodnota, rucni_zadani = determine_boundary_attributes(safe_find(required_element, f'm:max', namespaces))
+                        if hodnota is not None: result_lists[f'{prefix}_{category}{category_id}_{required[0]}_Max_Hodnota'].append(hodnota)
+                        if rucni_zadani is not None: result_lists[f'{prefix}_{category}{category_id}_{required[0]}_Max_RucniZadani'].append(rucni_zadani)
+                    hodnota, vysledek = determine_result_attributes(required_element)
+                    if hodnota is not None: result_lists[f'{prefix}_{category}{category_id}_{required[0]}_Hodnota'].append(hodnota)
+                    if vysledek is not None: result_lists[f'{prefix}_{category}{category_id}_{required[0]}_Vysledek'].append(vysledek)
+
+
+# Vybere z každého vyústění hodnotu, která je považována za nejhorší
+def select_worst(result_lists, strategy_dict):
+    result = {}
+    for name, result_list in result_lists.items():
+        try:
+            if not result_list:
+                result[name] = None
+                continue
+            if 'Min' in name or 'Max' in name or 'Vysledek' in name:
+                result[name] = next((result for result in result_list if result is not None), None)
+                continue
+            strategy = strategy_dict[name.split('_')[-2]]
+            floats = floats_sublist(result_list)
+            float_result = None
+            match strategy:
+                case 'max':
+                    float_result = max(floats, default=None)
+                case 'min':
+                    float_result = min(floats, default=None)
+                case 'mean':
+                    float_result = mean(floats) # Vyvolá výjimku v případě prázdného seznamu
+                case 'max_diff_1':
+                    float_result = max(floats, default=None, key=lambda x: abs(x - 1.0))
+                case 'bounds':
+                    name_stem = name.partition("_Hodnota")[0]
+                    try:
+                        min_value = float(result[f'{name_stem}_Min_Hodnota'])
+                        max_value = float(result[f'{name_stem}_Max_Hodnota'])
+                        optimal_value = (max_value + min_value) / 2
+                        float_result = max(floats, default=None, key=lambda x: abs(x - optimal_value))
+                    # Pokud by některá z krajních hodnot chyběla vezmu první záznam o otáčkách
+                    except Exception:
+                        float_result = next((float for float in floats if float is not None), None)
+            # Cast na string, aby bylo zachováno načtení všech hodnot jako string
+            if float_result is not None:
+                result[name] = str(float_result)
+            else:
+                result[name] = None
+        except Exception:
+            result[name] = None
+    return result
 
 
 def get_detail_benzin(element, prefix, namespaces):
     result = {}
     result[f'{prefix}_Palivo'] = safe_get_attribute(element, 'palivo')
     benzin_vyusteni_element_list = safe_findall(element, 'm:vyusteni', namespaces)
-    for i in range(3):
-        benzin_vyusteni_element = safe_index(benzin_vyusteni_element_list, i)
-        result.update(get_otacky_benzin(safe_find(benzin_vyusteni_element, 'm:otackyVolnobezne', namespaces), f'{prefix}_Vyusteni{i}_OtackyVolnobezne', namespaces))
-        result.update(get_otacky_benzin(safe_find(benzin_vyusteni_element, 'm:otackyZvysene', namespaces), f'{prefix}_Vyusteni{i}_OtackyZvysene', namespaces))
+    result[f'{prefix}_PocetVyusteni'] = str(len(benzin_vyusteni_element_list))
+    # Definice seznamů pro vyplnění hodnot z jednotlivých vyústění (název, xpath, min hodnota, max hodnota)
+    required_list = [('CO', 'CO', False, True), ('CO2', 'CO2', False, False), ('COCOOR', 'COCOOR', False, False), ('HC', 'HC', False, True), ('LAMBDA', 'LAMBDA', True, True), ('N', 'N', True, True), ('NOX', 'NOX', False, False), ('O2', 'O2', False, False), ('TPS', 'TPS', False, False)]
+    # {název: (xpath, počet opakování}
+    categories = {'OtackyVolnobezne': ('otackyVolnobezne', 1), 'OtackyZvysene': ('otackyZvysene', 1)}
+    result_lists = initialize_result_list(required_list, categories.keys(), prefix)
+    fill_result_list(benzin_vyusteni_element_list, result_lists, required_list, categories, prefix, namespaces)
+    strategy_dict = {'CO': 'max', 'CO2': 'min', 'COCOOR': 'max', 'HC': 'max', 'LAMBDA': 'max_diff_1', 'N': 'bounds', 'NOX': 'max', 'O2': 'max', 'TPS': 'max'}
+    result |= select_worst(result_lists, strategy_dict)
     return result
 
 
-def get_detail_nafta(element, namespaces):
+def get_detail_nafta(element, prefix, namespaces):
     result = {}
-    result['Nafta_Palivo'] = safe_get_attribute(element, 'palivo')
-
-    mereni_vznet_limit_element = safe_find(element, 'm:mereniVznetLimit', namespaces)
-    limits_list = [('Tps', 'TPS'), ('CasAkcelerace', 'casAkcelerace'), ('Kourivost', 'kourivost'), ('KourivostRozpeti', 'kourivostRozpeti'), ('OtackyPrebehove', 'otackyPrebehove'), ('OtackyVolnobezne', 'otackyVolnobezne')]
-    for col_name, element_name in limits_list:
-        limit_element = safe_find(mereni_vznet_limit_element, f'm:{element_name}', namespaces)
-        result.update(get_boundary_attributes(safe_find(limit_element, 'm:min', namespaces), f'Nafta_{col_name}_Min'))
-        result.update(get_boundary_attributes(safe_find(limit_element, 'm:max', namespaces), f'Nafta_{col_name}_Max'))
-
+    result[f'{prefix}_Palivo'] = safe_get_attribute(element, 'palivo')
     nafta_vyusteni_element_list = safe_findall(element, 'm:vyusteni', namespaces)
-    for i in range(3):
-        nafta_vyusteni_element = safe_index(nafta_vyusteni_element_list, i)
-        nafta_mereni_prumer_element = safe_find(nafta_vyusteni_element, 'm:mereniPrumer', namespaces)
-        result.update(get_mereni_nafta(nafta_mereni_prumer_element, f'Nafta_Vyusteni{i}_MereniPrumer', namespaces))
-        nafta_mereni_element_list = safe_findall(nafta_vyusteni_element, 'm:mereni', namespaces)
-        for j in range(4):
-            nafta_mereni_element = safe_index(nafta_mereni_element_list, j)
-            result.update(get_mereni_nafta(nafta_mereni_element, f'Nafta_Vyusteni{i}_Mereni{j}', namespaces))
-
+    result[f'{prefix}_PocetVyusteni'] = str(len(nafta_vyusteni_element_list))
+    # Definice seznamů pro vyplnění hodnot z jednotlivých vyústění (název, xpath, min hodnota, max hodnota)
+    required_list = [('TPS', 'TPS', False, False), ('CasAkcelerace', 'casAkcelerace', False, False), ('Kourivost', 'kourivost', False, False), ('OtackyPrebehove', 'otackyPrebehove', False, False), ('OtackyVolnobezne', 'otackyVolnobezne', False, False), ('Teplota', 'teplota', False, False), ('TlakKomory', 'tlakKomory', True, True), ('TeplotaKomory', 'teplotaKomory', True, True)]
+    # {název: (xpath, počet opakování}
+    categories = {'MereniPrumer': ('mereniPrumer', 1), 'Mereni': ('m:mereni', 4)}
+    result_lists = initialize_result_list(required_list, categories.keys(), prefix)
+    fill_result_list(nafta_vyusteni_element_list, result_lists, required_list, categories, prefix, namespaces)
+    strategy_dict = {'TPS': 'mean', 'CasAkcelerace': 'max', 'Kourivost': 'max', 'OtackyPrebehove': 'mean', 'OtackyVolnobezne': 'mean', 'Teplota': 'min', 'TlakKomory': 'mean', 'TeplotaKomory': 'mean'}
+    result |= select_worst(result_lists, strategy_dict)
     return result
     
 
-def get_detail_plyn(element, namespaces):
-    result = get_detail_benzin(element, 'Plyn', namespaces)
+def get_detail_plyn(element, prefix, namespaces):
+    result = get_detail_benzin(element, prefix, namespaces)
 
     nadrz_plyn_element = safe_find(safe_find(element, 'm:kontrolaNadrzi', namespaces), 'm:nadrz', namespaces)
-    result['Plyn_Nadrz_Vyrobce'] = safe_get_attribute(nadrz_plyn_element, 'vyrobce')
-    result['Plyn_Nadrz_Homologace'] = safe_get_attribute(nadrz_plyn_element, 'homologace')
-    result['Plyn_Nadrz_Zivotnost'] = safe_get_attribute(nadrz_plyn_element, 'zivotnost')
-    result['Plyn_Nadrz_Kontrola'] = safe_get_attribute(nadrz_plyn_element, 'kontrola')
+    result[f'{prefix}_Nadrz_Vyrobce'] = safe_get_attribute(nadrz_plyn_element, 'vyrobce')
+    result[f'{prefix}_Nadrz_Homologace'] = safe_get_attribute(nadrz_plyn_element, 'homologace')
+    result[f'{prefix}_Nadrz_Zivotnost'] = safe_get_attribute(nadrz_plyn_element, 'zivotnost')
+    result[f'{prefix}_Nadrz_Kontrola'] = safe_get_attribute(nadrz_plyn_element, 'kontrola')
 
     return result
 
@@ -597,10 +655,10 @@ def parse_mereni(element, namespaces):
     emise_record.update(get_detail_benzin(detail_benzin_element, 'Benzin', namespaces))
 
     detail_nafta_element = safe_find(pristroj_data_element, 'm:detailNafta', namespaces)
-    emise_record.update(get_detail_nafta(detail_nafta_element, namespaces))
+    emise_record.update(get_detail_nafta(detail_nafta_element, 'Nafta', namespaces))
 
     detail_plyn_element = safe_find(pristroj_data_element, 'm:detailPlyn', namespaces)
-    emise_record.update(get_detail_plyn(detail_plyn_element, namespaces))
+    emise_record.update(get_detail_plyn(detail_plyn_element, 'Plyn', namespaces))
 
     return emise_record
 
@@ -636,15 +694,13 @@ def parse_to_parquet(source_dir, file_parser, no_threads, verbosity, delete):
         delete_path(source_dir, verbosity)
 
 
-def write_batch(output_dir, batch_data, file_stem, mapping=None):
+def write_batch(output_dir, batch_data, file_stem):
     if not batch_data: return
     
     file_name = f"{file_stem}.parquet"
     
     # Zapsání souboru na disk v požadovaném formátu
     df = pd.DataFrame(batch_data)
-    if mapping is not None:
-        df.rename(columns=mapping, inplace=True)
     table = pa.Table.from_pandas(df, preserve_index=False)
     pq.write_table(table, output_dir / file_name)
 
@@ -764,7 +820,7 @@ def parse_measurements_file(target_dir, xml_file, namespaces, verbosity, delete)
         del tree
         
         # Zapsání souborů na disk
-        write_batch(target_dir, mereni_batch, xml_file.stem, mereni_key_to_id)
+        write_batch(target_dir, mereni_batch, xml_file.stem)
         if verbosity > Verbosity.NORMAL:
             print(f'Zapisuji vyparsované parquet soubory ze: "{xml_file.stem}".')
         elif verbosity > Verbosity.QUIET:
@@ -800,6 +856,10 @@ def parse_measurements_to_parquet(dataset_dir, measurements_subdir, no_threads, 
 
 #--------------------------------------------------------------------------------------------------------------
 
+
+
+#--------------------------------------------------------------------------------------------------------------
+
 if __name__ == '__main__':
     # Definice konstant
     INSPECTIONS_DIR = Path('kod/data/prohlidky_vozidel_stk_a_sme')
@@ -823,14 +883,14 @@ if __name__ == '__main__':
 
     explain_verbosity(VERBOSITY)
 
-    print('——————————————————————————————————PROHLÍDKY VOZIDEL STK A SME:——————————————————————————————————\n')
-    downloaded_inspection_dates = downloaded_dates([INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR])
-    download_files(INSPECTIONS_DIR / 'gz', PARENT_DATASET_INSPECTIONS, START_DATE, END_DATE, downloaded_inspection_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
-    extract_files(INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
-    parse_inspections_to_parquet(INSPECTIONS_DIR, INSPECTIONS_SUBDIR, DEFECTS_SUBDIR, ACTIONS_SUBDIR, ADR_TYPE_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY)
+    # print('——————————————————————————————————PROHLÍDKY VOZIDEL STK A SME:——————————————————————————————————\n')
+    # downloaded_inspection_dates = downloaded_dates([INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR])
+    # download_files(INSPECTIONS_DIR / 'gz', PARENT_DATASET_INSPECTIONS, START_DATE, END_DATE, downloaded_inspection_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
+    # extract_files(INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
+    # parse_inspections_to_parquet(INSPECTIONS_DIR, INSPECTIONS_SUBDIR, DEFECTS_SUBDIR, ACTIONS_SUBDIR, ADR_TYPE_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY)
 
-    print('\n——————————————————————————————————DATA Z MĚŘÍCÍCH PŘÍSTROJŮ:——————————————————————————————————\n')
-    downloaded_measurement_dates = downloaded_dates([MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_SUBDIR])
-    download_files(MEASUREMENTS_DIR / 'gz', PARENT_DATASET_MEASUREMENTS, START_DATE, END_DATE, downloaded_measurement_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
-    extract_files(MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
+    # print('\n——————————————————————————————————DATA Z MĚŘÍCÍCH PŘÍSTROJŮ:——————————————————————————————————\n')
+    # downloaded_measurement_dates = downloaded_dates([MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_SUBDIR])
+    # download_files(MEASUREMENTS_DIR / 'gz', PARENT_DATASET_MEASUREMENTS, START_DATE, END_DATE, downloaded_measurement_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
+    # extract_files(MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
     parse_measurements_to_parquet(MEASUREMENTS_DIR, MEASUREMENTS_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)

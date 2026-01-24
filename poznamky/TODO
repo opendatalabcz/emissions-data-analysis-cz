@@ -5,6 +5,7 @@ popsat nekonzistence v datech
     - OBD_Readiness neodpovidajici typu paliva
     - Prazdne protokoly - ma pohon na jednu vec pro vic veci
 dostat rozparsovane do pozadovaneho formatu
+pocet mereni u nafty pridat
 
 ANALYZOVAT:
 zda se v case zlepsuje compliance
@@ -38,5 +39,17 @@ nakladni vozidla u nafty resit?
 actia redundantni udaje
 
 UKAZAT:
-precetl jsem 77 stran metodickeho postupu
+precetl jsem 40 stran metodickeho postupu
 protokoly z vyhlasky 2018-211
+strana 36 - vice vyfuku bere se nejhorsi
+minimalni a maximalni hodnoty jenom nekde - viz notebooklm
+slouceny vyusteni - V žádné z větví nesmí být překročeny povolené limity, výsledné hodnoty do protokolu o měření emisí vozidel se uvádějí pro každou z měřených veličin nepříznivější vůči limitu.
+    ruzne strategie pro slouceni
+
+
+Metodika rozlišuje 4 hlavní kategorie vozidel podle toho, jak kombinují zdroje energie:
+1. Vícepalivová (Bi-fuel): Nejčastější typ (Benzín + LPG/CNG). Má dvě oddělené nádrže a může přepínat paliva. Řízení funguje na principu Master-Slave, kde hlavní (benzínová) jednotka řídí tu plynovou,.
+2. Duální vozidla: Specifikum pro diesely s přidaným plynem. Motor běží vždy na naftu (základ) a plyn se pouze přidává do sání. Nelze jet čistě na plyn.
+3. Flexifuel: Vozidlo s jednou nádrží na proměnlivou směs paliv (typicky Benzín + Ethanol E85). Řídicí jednotka se sama přizpůsobí aktuálnímu složení.
+4. Hybridy (HEV): Spalovací motor + elektromotor. Pro emise je klíčový spalovací motor, který se často musí přepnout do speciálního servisního módu, aby běžel trvale,.
+Legislativní špek: Pokud má auto na plyn benzínovou nádrž menší než 15 litrů, papírově se bere jako jednopalivové.

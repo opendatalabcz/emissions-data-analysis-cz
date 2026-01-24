@@ -45,3 +45,16 @@ def date_from_file_path(file_path):
 def date_from_file_name(file_name):
     return str_to_date(file_name.split('.')[0].split(' ')[-1])
 
+
+def pad_list_with_none(lst, length):
+    return lst[:length] + [None] * max(0, length - len(lst))
+
+
+# Iterátor vracící hodnoty ze seznamu, které podporují konverzi na float
+def floats_sublist(original_list):
+    for x in original_list:
+        try:
+            yield float(x)
+        except (ValueError, TypeError):
+            continue
+
