@@ -10,8 +10,10 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from lxml import etree # type: ignore <- pylance milně hlásí chybu
 import requests
+import polars as pl
 
 from utils import create_directory, Verbosity, str_to_date, date_from_file_path, date_from_file_name, delete_path, floats_sublist, pad_list_with_none
+from schemas import mereni_schema, nafta_schema
 
 
 def explain_verbosity(verbosity):
@@ -426,11 +428,20 @@ def parse_prohlidka(element, namespaces):
 
 #--------------------------------------------------------------------------------------------------------------
 
-def get_poznamky(element, namespaces):
-    poznamky = safe_findall(element, 'm:poznamka', namespaces)
-    if len(poznamky) == 0:
+def get_list(element, xpath, namespaces):
+    element_list = safe_findall(element, f'm:{xpath}', namespaces)
+    text_list = [element.text for element in element_list]
+    if len(text_list) == 0:
         return None
-    return '\n'.join(p.text for p in poznamky if p.text is not None)
+    return text_list
+
+
+def get_attribute_list(element, xpath, namespaces):
+    element_list = safe_findall(element, f'm:{xpath}', namespaces)
+    text_list = [safe_get_attribute(element, 'text') for element in element_list]
+    if len(text_list) == 0:
+        return None
+    return text_list
 
 
 def determine_result_attributes(element):
@@ -441,6 +452,14 @@ def determine_boundary_attributes(element):
     return (safe_get_attribute(element, 'hodnota'), safe_get_attribute(element, 'rucniZadani'))
 
 
+def get_boundary_attributes(element, prefix):
+    hodnota, rucni_zadani = determine_boundary_attributes(element)
+    return {
+        f'{prefix}_Hodnota': hodnota,
+        f'{prefix}_RucniZadani': rucni_zadani
+    }
+
+
 def get_monitor_attributes(element, prefix):
     return {
         f'{prefix}_Podporovano': safe_get_attribute(element, 'podporovano'),
@@ -449,7 +468,16 @@ def get_monitor_attributes(element, prefix):
 
 
 # Inicializuje slovník listů, kde každá požadovaná hodnota představuje klíč
-def initialize_result_list(required_list, category_list, prefix):
+def initialize_result_list(required_list, categories, prefix):
+    # Create list of names of the categories of placeholders
+    category_list = []
+    for category, (_, repetitions) in categories.items():
+        if repetitions == 1:
+            category_list.append(category)
+        else:
+            for i in range(repetitions):
+                category_list.append(f'{category}{i}')
+
     result_lists = {}
     for category in category_list:
         for required in required_list:
@@ -545,7 +573,7 @@ def get_detail_benzin(element, prefix, namespaces):
     required_list = [('CO', 'CO', False, True), ('CO2', 'CO2', False, False), ('COCOOR', 'COCOOR', False, False), ('HC', 'HC', False, True), ('LAMBDA', 'LAMBDA', True, True), ('N', 'N', True, True), ('NOX', 'NOX', False, False), ('O2', 'O2', False, False), ('TPS', 'TPS', False, False)]
     # {název: (xpath, počet opakování}
     categories = {'OtackyVolnobezne': ('otackyVolnobezne', 1), 'OtackyZvysene': ('otackyZvysene', 1)}
-    result_lists = initialize_result_list(required_list, categories.keys(), prefix)
+    result_lists = initialize_result_list(required_list, categories, prefix)
     fill_result_list(benzin_vyusteni_element_list, result_lists, required_list, categories, prefix, namespaces)
     strategy_dict = {'CO': 'max', 'CO2': 'min', 'COCOOR': 'max', 'HC': 'max', 'LAMBDA': 'max_diff_1', 'N': 'bounds', 'NOX': 'max', 'O2': 'max', 'TPS': 'max'}
     result |= select_worst(result_lists, strategy_dict)
@@ -554,16 +582,32 @@ def get_detail_benzin(element, prefix, namespaces):
 
 def get_detail_nafta(element, prefix, namespaces):
     result = {}
+    # Limitní hodnoty
+    limit_element = safe_find(element, 'm:mereniVznetLimit', namespaces)
+    otacky_volnobezne = safe_find(limit_element, 'm:otackyVolnobezne', namespaces)
+    result |= get_boundary_attributes(safe_find(otacky_volnobezne, 'm:min', namespaces), f'{prefix}_MereniVznetLimit_OtackyVolnobezne_Min')
+    result |= get_boundary_attributes(safe_find(otacky_volnobezne, 'm:max', namespaces), f'{prefix}_MereniVznetLimit_OtackyVolnobezne_Max')
+    otacky_prebehove = safe_find(limit_element, 'm:otackyPrebehove', namespaces)
+    result |= get_boundary_attributes(safe_find(otacky_prebehove, 'm:min', namespaces), f'{prefix}_MereniVznetLimit_OtackyPrebehove_Min')
+    result |= get_boundary_attributes(safe_find(otacky_prebehove, 'm:max', namespaces), f'{prefix}_MereniVznetLimit_OtackyPrebehove_Max')
+    cas_akcelerace = safe_find(limit_element, 'm:casAkcelerace', namespaces)
+    result |= get_boundary_attributes(safe_find(cas_akcelerace, 'm:max', namespaces), f'{prefix}_MereniVznetLimit_CasAkcelerace_Max')
+    kourivost = safe_find(limit_element, 'm:kourivost', namespaces)
+    result |= get_boundary_attributes(safe_find(kourivost, 'm:max', namespaces), f'{prefix}_MereniVznetLimit_Kourivost_Max')
+    kourivost_rozpeti = safe_find(limit_element, 'm:kourivostRozpeti', namespaces)
+    result |= get_boundary_attributes(safe_find(kourivost_rozpeti, 'm:max', namespaces), f'{prefix}_MereniVznetLimit_KourivostRozpeti_Max')
+
+    # Hodnoty pro jednotlivá měření
     result[f'{prefix}_Palivo'] = safe_get_attribute(element, 'palivo')
     nafta_vyusteni_element_list = safe_findall(element, 'm:vyusteni', namespaces)
     result[f'{prefix}_PocetVyusteni'] = str(len(nafta_vyusteni_element_list))
     # Definice seznamů pro vyplnění hodnot z jednotlivých vyústění (název, xpath, min hodnota, max hodnota)
-    required_list = [('TPS', 'TPS', False, False), ('CasAkcelerace', 'casAkcelerace', False, False), ('Kourivost', 'kourivost', False, False), ('OtackyPrebehove', 'otackyPrebehove', False, False), ('OtackyVolnobezne', 'otackyVolnobezne', False, False), ('Teplota', 'teplota', False, False), ('TlakKomory', 'tlakKomory', True, True), ('TeplotaKomory', 'teplotaKomory', True, True)]
+    required_list = [('TPS', 'TPS', False, False), ('CasAkcelerace', 'casAkcelerace', False, False), ('Kourivost', 'kourivost', False, False), ('OtackyPrebehove', 'otackyPrebehove', False, False), ('OtackyVolnobezne', 'otackyVolnobezne', False, False), ('Teplota', 'teplota', False, False)]
     # {název: (xpath, počet opakování}
-    categories = {'MereniPrumer': ('mereniPrumer', 1), 'Mereni': ('m:mereni', 4)}
-    result_lists = initialize_result_list(required_list, categories.keys(), prefix)
+    categories = {'MereniPrumer': ('mereniPrumer', 1), 'Mereni': ('mereni', 4)}
+    result_lists = initialize_result_list(required_list, categories, prefix)
     fill_result_list(nafta_vyusteni_element_list, result_lists, required_list, categories, prefix, namespaces)
-    strategy_dict = {'TPS': 'mean', 'CasAkcelerace': 'max', 'Kourivost': 'max', 'OtackyPrebehove': 'mean', 'OtackyVolnobezne': 'mean', 'Teplota': 'min', 'TlakKomory': 'mean', 'TeplotaKomory': 'mean'}
+    strategy_dict = {'TPS': 'mean', 'CasAkcelerace': 'max', 'Kourivost': 'max', 'OtackyPrebehove': 'mean', 'OtackyVolnobezne': 'mean', 'Teplota': 'min'}
     result |= select_worst(result_lists, strategy_dict)
     return result
     
@@ -601,7 +645,7 @@ def parse_mereni(element, namespaces):
     emise_record['MericiPristroj_OBD'] = safe_get_attribute(merici_pristroj_element, 'OBD')
     emise_record['MericiPristroj_VerzeSoftware'] = safe_get_attribute(merici_pristroj_element, 'verzeSoftware')
 
-    emise_record['Poznamky'] = get_poznamky(prohlidka_element, namespaces)
+    emise_record['Poznamky'] = get_list(prohlidka_element, 'poznamka', namespaces)
 
     vozidlo_element = safe_find(pristroj_data_element, 'm:vozidlo', namespaces)
     emise_record['Vozidlo_Vin'] = safe_get(vozidlo_element, 'm:VIN', namespaces)
@@ -637,6 +681,9 @@ def parse_mereni(element, namespaces):
     emise_record['Obd_VzdalenostDtc'] = safe_get(rizeny_obd_element, 'm:vzdalenostDTC', namespaces)
     emise_record['Obd_CasDtc'] = safe_get(rizeny_obd_element, 'm:casDTC', namespaces)
     emise_record['Obd_KontrolaMil'] = safe_get(rizeny_obd_element, 'm:kontrolaMIL', namespaces)
+    emise_record['Obd_VypisDtc'] = get_attribute_list(safe_find(rizeny_obd_element, 'm:vypisDTC', namespaces), 'DTC', namespaces)
+
+    emise_record['Zavady'] = get_list(safe_find(pristroj_data_element, 'm:zavady', namespaces), 'kod', namespaces)
 
     readiness_element = safe_find(rizeny_obd_element, 'm:readiness', namespaces)
     emise_record['Obd_Readiness_Vysledek'] = safe_get_attribute(readiness_element, 'vysledek')
@@ -856,6 +903,48 @@ def parse_measurements_to_parquet(dataset_dir, measurements_subdir, no_threads, 
 
 #--------------------------------------------------------------------------------------------------------------
 
+def split_measurements(mereni_dir, diesel_personal_dir, verbosity):
+    source_files = list(mereni_dir.iterdir())
+    if verbosity > Verbosity.QUIET:
+        print(f'Nalezeno {len(source_files)} souborů obsahující data o měření. Zahajuji jejich filtrování')
+
+    create_directory(diesel_personal_dir, verbosity)
+
+    for file in source_files:
+        # Přeskočení souboru, pokud už byl zpracován
+        target_file = diesel_personal_dir / file.name
+        if skip_file(target_file, verbosity):
+            continue
+
+        df = pl.read_parquet(file, schema=mereni_schema)
+
+        j1939_cols = [name for name in mereni_schema.keys() if 'J1939' in name]
+        obd_zazeh_cols = [name for name in mereni_schema.keys() if 'Obd_Readiness_Zazeh' in name]
+        # Podmínka pro záznam osobního dieselového vozidla
+        diesel_personal_cond = [
+            # Alespoň jedno výústění dieselu bylo změřeno (a žádné vyústění jiného pohonu neměřeno)
+            pl.col('Benzin_PocetVyusteni').eq('0') & pl.col('Nafta_PocetVyusteni').ne('0') & pl.col('Plyn_PocetVyusteni').eq('0'),
+            # U diagnostických chybových kódů pro užitková vozidla nebyl proveden pokus o testování
+            pl.all_horizontal(pl.col(j1939_cols).is_null()),
+            # U diagnostických chybových kódů pro zážehová vozidla nebyl proveden pokus o testování
+            pl.all_horizontal(pl.col(obd_zazeh_cols).is_null())
+        ]
+
+        # Sloupce, které nesou význam pro naftová vozidla
+        diesel_columns = nafta_schema.keys()
+
+        df_diesel_personal = df.filter(diesel_personal_cond).select(diesel_columns)
+        df_diesel_personal.write_parquet(target_file)
+
+        # Oznámění úspěchu uživateli
+        if verbosity > Verbosity.NORMAL:
+            print(f'Zapisuji vyfiltrované parquet soubory ze: "{file.stem}".')
+        elif verbosity > Verbosity.QUIET:
+            print('.', end='', flush=True)
+
+    # Nová řádka pro vizuélní odlišení konce úkonu
+    if verbosity > Verbosity.QUIET:
+        print('\nFILTROVÁNÍ DONONČENO.\n')
 
 
 #--------------------------------------------------------------------------------------------------------------
@@ -868,7 +957,7 @@ if __name__ == '__main__':
     # MEASUREMENTS_DIR = Path('kod/data/data_z_mericich_pristroju/data_z_mericich_pristoroju')
     PARENT_DATASET_MEASUREMENTS = 'https://data.gov.cz/zdroj/datové-sady/66003008/e8e07fa264f3bd2179be03381ec324de'
     START_DATE = '01-01-2019'
-    END_DATE = None #'31-12-2024'
+    END_DATE = None
     NO_DOWNLOAD_THREADS = 30
     MAX_DOWNLOAD_ATTEMPTS = 10
     NO_EXTRACT_THREADS = 30
@@ -877,8 +966,9 @@ if __name__ == '__main__':
     DEFECTS_SUBDIR = 'zavady'
     ACTIONS_SUBDIR = 'ukony'
     ADR_TYPE_SUBDIR = 'adr_typy'
-    MEASUREMENTS_SUBDIR = 'mereni'
+    MEASUREMENTS_ALL_SUBDIR = 'mereni_all'
     NO_PARSE_PROCESSES = 4
+    DIESEL_PERSONAL_SUBDIR = 'nafta_osobni'
 
 
     explain_verbosity(VERBOSITY)
@@ -890,7 +980,8 @@ if __name__ == '__main__':
     # parse_inspections_to_parquet(INSPECTIONS_DIR, INSPECTIONS_SUBDIR, DEFECTS_SUBDIR, ACTIONS_SUBDIR, ADR_TYPE_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY)
 
     # print('\n——————————————————————————————————DATA Z MĚŘÍCÍCH PŘÍSTROJŮ:——————————————————————————————————\n')
-    # downloaded_measurement_dates = downloaded_dates([MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_SUBDIR])
+    # downloaded_measurement_dates = downloaded_dates([MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_ALL_SUBDIR])
     # download_files(MEASUREMENTS_DIR / 'gz', PARENT_DATASET_MEASUREMENTS, START_DATE, END_DATE, downloaded_measurement_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
     # extract_files(MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
-    parse_measurements_to_parquet(MEASUREMENTS_DIR, MEASUREMENTS_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)
+    # parse_measurements_to_parquet(MEASUREMENTS_DIR, MEASUREMENTS_ALL_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)
+    split_measurements(MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_ALL_SUBDIR, MEASUREMENTS_DIR / 'parquet' / DIESEL_PERSONAL_SUBDIR, VERBOSITY)

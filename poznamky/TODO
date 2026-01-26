@@ -6,6 +6,8 @@ popsat nekonzistence v datech
     - Prazdne protokoly - ma pohon na jednu vec pro vic veci
 dostat rozparsovane do pozadovaneho formatu
 pocet mereni u nafty pridat
+k nafte pridat vozidla, ktera maji nevalidni zaznamy - neuspech
+sjednotit vypisi pri spusteni celeho
 
 ANALYZOVAT:
 zda se v case zlepsuje compliance
@@ -45,6 +47,8 @@ strana 36 - vice vyfuku bere se nejhorsi
 minimalni a maximalni hodnoty jenom nekde - viz notebooklm
 slouceny vyusteni - V žádné z větví nesmí být překročeny povolené limity, výsledné hodnoty do protokolu o měření emisí vozidel se uvádějí pro každou z měřených veličin nepříznivější vůči limitu.
     ruzne strategie pro slouceni
+vycleneny nakladaky s J1939 protokolem (az na vyjimky jako dodavky s motorem homologovanym pro nakaladaky predstavuje spolehlive rozlisovaci kriterium)
+vyfiltrovany diesely - prazdne bude potreba pridat
 
 
 Metodika rozlišuje 4 hlavní kategorie vozidel podle toho, jak kombinují zdroje energie:
