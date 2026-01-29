@@ -31,7 +31,7 @@ def create_directory(dir_name, verbosity):
 def delete_path(path, verbosity):
     if path.is_dir():
         if verbosity > Verbosity.QUIET:
-            print(f'Mažu: "{path}".')
+            print(f'\nMažu: "{path}".')
         path.rmdir()
     else:
         if verbosity > Verbosity.NORMAL:
@@ -80,7 +80,7 @@ def cast_mereni(df):
         pl.col('Vysledek_TesnostPlynovehoZarizeni').replace_strict(bool_map, return_dtype=pl.Boolean),
         pl.col('Vysledek_Vyhovuje').replace_strict(bool_map, return_dtype=pl.Boolean),
         pl.col('PristiProhlidka').str.replace(r'T.*', '').cast(pl.Date),
-        pl.col('EmisniSystem').cast(pl.Enum('Nerizeny', 'Rizeny', 'Rizeny_Obd'))
+        pl.col('EmisniSystem').cast(pl.Enum(['Nerizeny', 'Rizeny', 'Rizeny_Obd'])),
         pl.col('Obd_PocetDtc').cast(pl.Int32),
         pl.col('Obd_VzdalenostDtc').cast(pl.Int32),
         pl.col('Obd_CasDtc').cast(pl.Int32),
@@ -90,6 +90,22 @@ def cast_mereni(df):
         # Skupiny sloupců
         pl.col('^.*(RucniZadani|Podporovano|Otestovano)$').replace_strict(bool_map, return_dtype=pl.Boolean),
         pl.col('^.*Hodnota$').str.strip_chars().cast(pl.Float32),
-        pl.col('^.*Vysledek$').exclude('Obd_Readiness_Vysledek').cast(pl.Int8)
+        pl.col('^.*Vysledek$').exclude('Obd_Readiness_Vysledek').cast(pl.Int8),
+        pl.col('^.*Pritomno$').replace_strict(bool_map, return_dtype=pl.Boolean),
     ])
 
+
+# Konverze času v sekundách na string v přirozeném formátu
+def sec_to_hms(x, _):
+    result = ''
+    if x <= 0:
+        x = -x
+        result = result + '- '
+    h = int(x // 3600)
+    m = int((x % 3600) // 60)
+    s = int(x % 60)
+    if h > 0:
+        return result + f"{h}h {m}m"
+    if m > 0:
+        return result + f"{m}m {s}s"
+    return result + f"{s}s"

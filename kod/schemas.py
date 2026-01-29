@@ -528,4 +528,9 @@ nafta_schema = {
     'Nafta_Mereni3_OtackyVolnobezne_Vysledek': pl.String,
     'Nafta_Mereni3_Teplota_Hodnota': pl.String,
     'Nafta_Mereni3_Teplota_Vysledek': pl.String,
+    # Pro kontrolu validity dat
+    'Benzin_PocetVyusteni': pl.String,
+    'Plyn_PocetVyusteni': pl.String,
+    'Obd_Readiness_J1939_Pritomno': pl.String,
+    'Obd_Readiness_Zazeh_Pritomno': pl.String,
 }

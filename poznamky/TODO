@@ -1,13 +1,16 @@
 automaticke stazeni a zpracovani stanic stk a sme
 cast datatype strict false
-ukladani v id forme a nasledne prevedeni zpet
+; ukladani v id forme a nasledne prevedeni zpet
 popsat nekonzistence v datech
     - OBD_Readiness neodpovidajici typu paliva
     - Prazdne protokoly - ma pohon na jednu vec pro vic veci
-dostat rozparsovane do pozadovaneho formatu
+; dostat rozparsovane do pozadovaneho formatu
 pocet mereni u nafty pridat
 k nafte pridat vozidla, ktera maji nevalidni zaznamy - neuspech
-sjednotit vypisi pri spusteni celeho
+sjednotit vypisy pri spusteni celeho
+feature engineering - delka misto konce - zacatek zda svatek, rocni obdobi, cas dne
+lepe oddelit uzitkova vozidla - hodne traktoru
+
 
 ANALYZOVAT:
 zda se v case zlepsuje compliance
@@ -48,7 +51,7 @@ minimalni a maximalni hodnoty jenom nekde - viz notebooklm
 slouceny vyusteni - V žádné z větví nesmí být překročeny povolené limity, výsledné hodnoty do protokolu o měření emisí vozidel se uvádějí pro každou z měřených veličin nepříznivější vůči limitu.
     ruzne strategie pro slouceni
 vycleneny nakladaky s J1939 protokolem (az na vyjimky jako dodavky s motorem homologovanym pro nakaladaky predstavuje spolehlive rozlisovaci kriterium)
-vyfiltrovany diesely - prazdne bude potreba pridat
+vyfiltrovany diesely - na zaklade reportu n, nm
 
 
 Metodika rozlišuje 4 hlavní kategorie vozidel podle toho, jak kombinují zdroje energie:
@@ -56,4 +59,3 @@ Metodika rozlišuje 4 hlavní kategorie vozidel podle toho, jak kombinují zdroj
 2. Duální vozidla: Specifikum pro diesely s přidaným plynem. Motor běží vždy na naftu (základ) a plyn se pouze přidává do sání. Nelze jet čistě na plyn.
 3. Flexifuel: Vozidlo s jednou nádrží na proměnlivou směs paliv (typicky Benzín + Ethanol E85). Řídicí jednotka se sama přizpůsobí aktuálnímu složení.
 4. Hybridy (HEV): Spalovací motor + elektromotor. Pro emise je klíčový spalovací motor, který se často musí přepnout do speciálního servisního módu, aby běžel trvale,.
-Legislativní špek: Pokud má auto na plyn benzínovou nádrž menší než 15 litrů, papírově se bere jako jednopalivové.
