@@ -52,6 +52,7 @@ slouceny vyusteni - V žádné z větví nesmí být překročeny povolené limi
     ruzne strategie pro slouceni
 vycleneny nakladaky s J1939 protokolem (az na vyjimky jako dodavky s motorem homologovanym pro nakaladaky predstavuje spolehlive rozlisovaci kriterium)
 vyfiltrovany diesely - na zaklade reportu n, nm
+brat v potaz m1g vozidla?
 
 
 Metodika rozlišuje 4 hlavní kategorie vozidel podle toho, jak kombinují zdroje energie:

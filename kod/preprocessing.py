@@ -13,7 +13,7 @@ import requests
 import polars as pl
 
 from utils import create_directory, Verbosity, str_to_date, date_from_file_path, date_from_file_name, delete_path, floats_sublist, pad_list_with_none
-from schemas import mereni_schema, nafta_schema
+from schemas import prohlidky_schema, mereni_schema, nafta_schema
 
 
 def explain_verbosity(verbosity):
@@ -292,7 +292,7 @@ def get_emisni_cast(element, namespaces):
     emise_record = {}
     emise_record['Emise_CisloProtokolu'] = safe_get(element, 'p:CisloProtokolu', namespaces)
     emise_record['Emise_DatumProhlidky'] = safe_get(element, 'p:DatumProhlidky', namespaces)
-    emise_record.update(get_stanice(safe_find(element, 'p:Stanice', namespaces), 'Emise', namespaces))
+    emise_record['Emise_Stanice_Cislo'] = safe_get(safe_find(element, 'p:Stanice', namespaces), 'p:Cislo', namespaces)
     emise_record.update(get_casove_udaje(safe_find(element, 'p:CasoveUdaje', namespaces), 'Emise', namespaces))
     emise_record['Emise_OdpovednaOsoba'] = safe_get(element, 'p:OdpovednaOsoba', namespaces)
     emise_record['Emise_ZakladniPalivo'] = safe_get(element, 'p:ZakladniPalivo', namespaces)
@@ -300,7 +300,6 @@ def get_emisni_cast(element, namespaces):
     emise_record['Emise_EmisniSystem'] = safe_get(element, 'p:EmisniSystem', namespaces)
     emise_record['Emise_VyrobceMotoru'] = safe_get(element, 'p:VyrobceMotoru', namespaces)
     emise_record['Emise_CisloMotoru'] = safe_get(element, 'p:CisloMotoru', namespaces)
-    emise_record['Emise_RokVyroby'] = safe_get(element, 'p:RokVyroby', namespaces)
     return emise_record
 
 
@@ -332,7 +331,6 @@ def get_adr_cast(element, namespaces):
 
 def get_tsk_cast(element, namespaces):
     tsk_record = {}
-    tsk_record.update(get_casove_udaje(safe_find(element, 'p:CasoveUdaje', namespaces), 'Tsk', namespaces))
     tsk_record['Tsk_OdpovednaOsoba'] = safe_get(element, 'p:OdpovednaOsoba', namespaces)
     return tsk_record
 
@@ -901,7 +899,29 @@ def parse_measurements_to_parquet(dataset_dir, measurements_subdir, no_threads, 
 
 #--------------------------------------------------------------------------------------------------------------
 
-def split_measurements(mereni_dir, diesel_dir, verbosity):
+def split_measurements(mereni_dir, prohlidky_dir, diesel_dir, verbosity):
+    # Vytvoření množin obsahujících požadované záznamy na základě datasetu prohlídek
+    diesel_ids = []
+    for file in prohlidky_dir.iterdir():
+        df_diesel_personal_ids = (
+            pl.read_parquet(file, schema=prohlidky_schema)
+            .select(['Emise_CisloProtokolu', 'Vozidlo_Druh', 'Emise_ZakladniPalivo', 'Emise_AlternativniPalivo'])
+            .filter(
+                (pl.col('Vozidlo_Druh') == 'OSOBNÍ AUTOMOBIL') &
+                (pl.col('Emise_ZakladniPalivo') == 'Nafta') &
+                (pl.col('Emise_AlternativniPalivo').is_null())
+            )
+            .select(
+                pl.col('Emise_CisloProtokolu')
+                .str.replace(r'^CZ-(0+)(\d+)', r'CZ-${2}')
+                .alias('CisloProtokolu') # Přejměnování, aby jméno odpovídalo datasetu měření
+            )
+        )
+        diesel_ids.append(df_diesel_personal_ids)
+    # Spojení id do jednoho dataframu
+    filter_diesel_personal_df = pl.concat(diesel_ids).unique()
+        
+    # Filtrace v datasetu měření
     source_files = list(mereni_dir.iterdir())
     if verbosity > Verbosity.QUIET:
         print(f'Nalezeno {len(source_files)} souborů obsahující data o měření. Zahajuji jejich filtrování')
@@ -914,8 +934,7 @@ def split_measurements(mereni_dir, diesel_dir, verbosity):
         if skip_file(target_file, verbosity):
             continue
 
-        df = pl.read_parquet(file, schema=mereni_schema)
-
+        # Sloupce obsahující testování typů OBD
         obd_zazeh_cols = [name for name in mereni_schema.keys() if 'Obd_Readiness_Zazeh' in name]
         obd_vznet_cols = [name for name in mereni_schema.keys() if 'Obd_Readiness_Vznet' in name]
         obd_j1939_cols = [name for name in mereni_schema.keys() if 'Obd_Readiness_J1939' in name]
@@ -923,12 +942,20 @@ def split_measurements(mereni_dir, diesel_dir, verbosity):
         # Sloupce, které nesou význam pro naftová vozidla
         diesel_columns = nafta_schema.keys()
         # Vytvoření datasetu pro dieselová vozidla
-        df_diesel_personal = (df.filter(pl.col('Vozidlo_Palivo').str.to_lowercase().is_in(['nm', 'n']))
-                              .with_columns(pl.any_horizontal(pl.col(obd_j1939_cols).is_not_null()).cast(pl.String).alias('Obd_Readiness_J1939_Pritomno'),
-                                            pl.any_horizontal(pl.col(obd_zazeh_cols).is_not_null()).cast(pl.String).alias('Obd_Readiness_Zazeh_Pritomno'))
-                              .select(diesel_columns)
+        (
+            pl.scan_parquet(file, schema=mereni_schema)
+            .with_columns(
+                pl.col('CisloProtokolu').str.replace(r'^CZ-(0+)(\d+)', r'CZ-${2}')
+            )
+            .join(filter_diesel_personal_df.lazy(), on='CisloProtokolu', how='semi')
+            .with_columns([
+                pl.any_horizontal(pl.col(obd_j1939_cols).is_not_null()).cast(pl.String).alias('Obd_Readiness_J1939_Pritomno'),
+                pl.any_horizontal(pl.col(obd_zazeh_cols).is_not_null()).cast(pl.String).alias('Obd_Readiness_Zazeh_Pritomno')
+            ])
+            .select(list(diesel_columns))
+            .collect()
+            .write_parquet(target_file)
         )
-        df_diesel_personal.write_parquet(target_file)
 
         # Oznámění úspěchu uživateli
         if verbosity > Verbosity.NORMAL:
@@ -967,15 +994,15 @@ if __name__ == '__main__':
 
     explain_verbosity(VERBOSITY)
 
-    print('——————————————————————————————————PROHLÍDKY VOZIDEL STK A SME:——————————————————————————————————\n')
-    downloaded_inspection_dates = downloaded_dates([INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR])
-    download_files(INSPECTIONS_DIR / 'gz', PARENT_DATASET_INSPECTIONS, START_DATE, END_DATE, downloaded_inspection_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
-    extract_files(INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
-    parse_inspections_to_parquet(INSPECTIONS_DIR, INSPECTIONS_SUBDIR, DEFECTS_SUBDIR, ACTIONS_SUBDIR, ADR_TYPE_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)
+    # print('——————————————————————————————————PROHLÍDKY VOZIDEL STK A SME:——————————————————————————————————\n')
+    # downloaded_inspection_dates = downloaded_dates([INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR])
+    # download_files(INSPECTIONS_DIR / 'gz', PARENT_DATASET_INSPECTIONS, START_DATE, END_DATE, downloaded_inspection_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
+    # extract_files(INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
+    # parse_inspections_to_parquet(INSPECTIONS_DIR, INSPECTIONS_SUBDIR, DEFECTS_SUBDIR, ACTIONS_SUBDIR, ADR_TYPE_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)
 
-    print('\n——————————————————————————————————DATA Z MĚŘÍCÍCH PŘÍSTROJŮ:——————————————————————————————————\n')
-    downloaded_measurement_dates = downloaded_dates([MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_ALL_SUBDIR])
-    download_files(MEASUREMENTS_DIR / 'gz', PARENT_DATASET_MEASUREMENTS, START_DATE, END_DATE, downloaded_measurement_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
-    extract_files(MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
-    parse_measurements_to_parquet(MEASUREMENTS_DIR, MEASUREMENTS_ALL_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)
-    split_measurements(MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_ALL_SUBDIR, MEASUREMENTS_DIR / 'parquet' / DIESEL_SUBDIR, VERBOSITY)
+    # print('\n——————————————————————————————————DATA Z MĚŘÍCÍCH PŘÍSTROJŮ:——————————————————————————————————\n')
+    # downloaded_measurement_dates = downloaded_dates([MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_ALL_SUBDIR])
+    # download_files(MEASUREMENTS_DIR / 'gz', PARENT_DATASET_MEASUREMENTS, START_DATE, END_DATE, downloaded_measurement_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
+    # extract_files(MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
+    # parse_measurements_to_parquet(MEASUREMENTS_DIR, MEASUREMENTS_ALL_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)
+    split_measurements(MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_ALL_SUBDIR, INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR, MEASUREMENTS_DIR / 'parquet' / DIESEL_SUBDIR, VERBOSITY)
