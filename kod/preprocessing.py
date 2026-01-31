@@ -899,6 +899,7 @@ def parse_measurements_to_parquet(dataset_dir, measurements_subdir, no_threads, 
 
 #--------------------------------------------------------------------------------------------------------------
 
+# UDELAT VICEPROCESOVE, AZ BUDE FILTRACE VICE NEZ DIESELU
 def split_measurements(mereni_dir, prohlidky_dir, diesel_dir, verbosity):
     # Vytvoření množin obsahujících požadované záznamy na základě datasetu prohlídek
     diesel_ids = []
