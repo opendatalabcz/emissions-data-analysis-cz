@@ -1,7 +1,11 @@
-from datetime import datetime
+import warnings
 from enum import IntEnum
+from datetime import datetime
 from pathlib import Path
+
 import polars as pl
+import pandas as pd
+from IPython.display import display
 
 
 class Verbosity(IntEnum):
@@ -59,41 +63,7 @@ def floats_sublist(original_list):
         except (ValueError, TypeError):
             continue
 
-
-# Pravidla pro přetypování sloupců v měření
-def cast_mereni(df):
-    bool_map = {'true': True, '1': True, 'false': False, '0': False}
-    return df.with_columns([
-        # Jednotlivé sloupce
-        pl.col('DatumProhlidky').cast(pl.Date),
-        pl.col('StaniceCislo').cast(pl.Int32),
-        pl.col('Zahajeni').cast(pl.Datetime),
-        pl.col('Ukonceni').cast(pl.Datetime),
-        pl.col('OdpovednaOsoba').cast(pl.Int32),
-        pl.col('Prohlidka_DatumProhlidky').cast(pl.Datetime),
-        pl.col('Vozidlo_Odometer').cast(pl.Int32),
-        pl.col('Vozidlo_RokVyroby').cast(pl.Int16),
-        pl.col('Vysledek_VisualniKontrola').replace_strict(bool_map, return_dtype=pl.Boolean),
-        pl.col('Vysledek_Readiness').replace_strict(bool_map, return_dtype=pl.Boolean),
-        pl.col('Vysledek_RidiciJednotkaStav').cast(pl.Int8),
-        pl.col('Vysledek_Mil').cast(pl.Int8),
-        pl.col('Vysledek_TesnostPlynovehoZarizeni').replace_strict(bool_map, return_dtype=pl.Boolean),
-        pl.col('Vysledek_Vyhovuje').replace_strict(bool_map, return_dtype=pl.Boolean),
-        pl.col('PristiProhlidka').str.replace(r'T.*', '').cast(pl.Date),
-        pl.col('EmisniSystem').cast(pl.Enum(['Nerizeny', 'Rizeny', 'Rizeny_Obd'])),
-        pl.col('Obd_PocetDtc').cast(pl.Int32),
-        pl.col('Obd_VzdalenostDtc').cast(pl.Int32),
-        pl.col('Obd_CasDtc').cast(pl.Int32),
-        pl.col('Obd_KontrolaMil').cast(pl.Int8),
-        pl.col('Obd_Readiness_Vysledek').replace_strict(bool_map, return_dtype=pl.Boolean),
-        
-        # Skupiny sloupců
-        pl.col('^.*(RucniZadani|Podporovano|Otestovano)$').replace_strict(bool_map, return_dtype=pl.Boolean),
-        pl.col('^.*Hodnota$').str.strip_chars().cast(pl.Float32),
-        pl.col('^.*Vysledek$').exclude('Obd_Readiness_Vysledek').cast(pl.Int8),
-        pl.col('^.*Pritomno$').replace_strict(bool_map, return_dtype=pl.Boolean),
-    ])
-
+#--------------------------------------------------------------------------------------------------------------
 
 # Konverze času v sekundách na string v přirozeném formátu
 def sec_to_hms(x, _):
@@ -109,3 +79,30 @@ def sec_to_hms(x, _):
     if m > 0:
         return result + f"{m}m {s}s"
     return result + f"{s}s"
+
+
+# Nahrazení seznamů počtem prvků
+def get_short(df):
+    list_cols = [name for name, dtype in df.schema.items() if isinstance(dtype, pl.List)]
+    return df.with_columns(pl.col(list_cols).list.len())
+
+
+# Zobrazení v pandas s nahrazenými seznamy počtem jejich prvků
+def short_display(df, len=10):
+    df_short = get_short(df).head(len)
+    print(df.shape)
+    display(df_short.to_pandas())
+
+
+# Zobrazí počtů jednotlivých sloupců v pandas
+def display_counts(df):
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', UserWarning)
+        height = len(df)
+        counts = df.null_count().to_pandas().T.astype('Int64') * (-1) + height
+        display(counts.astype(str) + f" / {height}")
+
+
+# Odhad velikosti polars dataframu v paměti
+def size_gb(df):
+    return f'{df.estimated_size() / (1024**3):.3f} GB'
