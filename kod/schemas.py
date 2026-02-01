@@ -27,7 +27,7 @@ prohlidky_schema= {
     'Registrace_CisloDokladu': pl.String,
     'Emise_CisloProtokolu': pl.String,
     'Emise_DatumProhlidky': pl.String,
-    'Emise_Stanice_Cislo': pl.String,
+    'Emise_StaniceCislo': pl.String,
     'Emise_Zahajeni': pl.String,
     'Emise_Ukonceni': pl.String,
     'Emise_OdpovednaOsoba': pl.String,
@@ -380,8 +380,6 @@ mereni_schema = {
     'Plyn_Nadrz_Kontrola': pl.String
 }
 
-# benzin_valid
-
 nafta_schema = {
     'CisloProtokolu': pl.String,
     'DatumProhlidky': pl.String,
@@ -527,4 +525,33 @@ nafta_schema = {
     'Plyn_PocetVyusteni': pl.String,
     'Obd_Readiness_J1939_Pritomno': pl.String,
     'Obd_Readiness_Zazeh_Pritomno': pl.String,
+}
+
+stanice_schema = {
+    'Stanice_Cislo': pl.String,
+    'Stanice_Adresa_Kraj': pl.String,
+    'Stanice_Adresa_Okres': pl.String,
+    'Stanice_Adresa_Orp': pl.String,
+    'Stanice_Adresa_Obec': pl.String,
+    'Stanice_Adresa_Ulice': pl.String,
+    'Stanice_Adresa_Psc': pl.String,
+    'Stanice_Kontakt_Telefon': pl.String,
+    'Stanice_Kontakt_Email': pl.String,
+    'Provozovatel_Ico': pl.String,
+    'Provozovatel_Nazev': pl.String,
+    'Provozovatel_Adresa_Obec': pl.String,
+    'Provozovatel_Adresa_Ulice': pl.String,
+    'Provozovatel_Adresa_Psc': pl.String,
+    'Provozovatel_Kontakt_Telefon': pl.String,
+    'Provozovatel_Kontakt_Email': pl.String,
+    'Stk_Pritomno': pl.String,
+    'Stk_Osvedceni_Kategorie': pl.List(pl.String),
+    'Adr_Pritomno': pl.String,
+    'Adr_Osvedceni_Kategorie': pl.List(pl.String),
+    'SmeZkusebni_Pritomno': pl.String,
+    'SmeZkusebni_Osvedceni_Kategorie': pl.List(pl.String),
+    'Sme_Pritomno': pl.String,
+    'Sme_Osvedceni_Kategorie': pl.List(pl.String),
+    'Sme_Osvedceni_EmisniSystem': pl.List(pl.String),
+    'Sme_Osvedceni_Palivo': pl.List(pl.String),
 }

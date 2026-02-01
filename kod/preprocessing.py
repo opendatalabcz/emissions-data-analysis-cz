@@ -12,8 +12,8 @@ from lxml import etree # type: ignore <- pylance milně hlásí chybu
 import requests
 import polars as pl
 
-from utils import create_directory, Verbosity, str_to_date, date_from_file_path, date_from_file_name, delete_path, floats_sublist, pad_list_with_none
-from schemas import prohlidky_schema, mereni_schema, nafta_schema
+from utils import *
+from schemas import *
 
 
 def explain_verbosity(verbosity):
@@ -33,6 +33,7 @@ def skip_file(file, verbosity):
 
 #--------------------------------------------------------------------------------------------------------------
 
+# Nalezení datumů, které už byly zpracovány
 def downloaded_dates(directories):
     result = set()
     for directory in directories:
@@ -48,9 +49,31 @@ def downloaded_dates(directories):
             result.add(date)
     return result
 
+
+# Výběr adres v intervalu, které ješte nebyly staženy
+def select_addresses(all_titles, all_download_urls, already_downloaded, start_date, end_date):
+    titles = []
+    download_urls = []
+    for title, download_url in zip(all_titles, all_download_urls):
+        date = date_from_file_name(title)
+        # Filtrace na základě intervalu
+        if date < str_to_date(start_date):
+            continue
+        if end_date is not None:
+            if date > str_to_date(end_date):
+                continue
+        
+        # Filtrace na základě předchozího zpracování
+        if date in already_downloaded:
+            continue
+
+        titles.append(title)
+        download_urls.append(download_url)
+    return titles, download_urls
+
 #--------------------------------------------------------------------------------------------------------------
 
-def get_url_addresses(sparql_endpoint, parent_dateset_iri, start_date, end_date, already_downloaded, verbosity):
+def get_url_addresses(sparql_endpoint, parent_dataset_iri, start_date, end_date, already_downloaded, verbosity):
     # Definice dotazu
     get_download_url_query = f'''
     PREFIX dcat: <http://www.w3.org/ns/dcat#>
@@ -58,7 +81,7 @@ def get_url_addresses(sparql_endpoint, parent_dateset_iri, start_date, end_date,
 
     SELECT ?title ?downloadURL 
     WHERE {{
-        <{parent_dateset_iri}> dcat:seriesMember ?dataset.
+        <{parent_dataset_iri}> dcat:seriesMember ?dataset.
         ?dataset dcat:distribution ?distribution.
         ?dataset dcterms:title ?title.
         ?distribution dcat:downloadURL ?downloadURL.
@@ -77,28 +100,12 @@ def get_url_addresses(sparql_endpoint, parent_dateset_iri, start_date, end_date,
     
     # Ziskani jmen z JSON formatu
     all_titles = [binding['title']['value'] for binding in response.json()['results']['bindings']]
-
     # Ziskani seznamu URL adres z JSON formatu
     all_download_urls = [binding['downloadURL']['value'] for binding in response.json()['results']['bindings']]
 
     # Vyfiltrování pouze požadovaných adres
-    titles = []
-    download_urls = []
-    for title, download_url in zip(all_titles, all_download_urls):
-        date = date_from_file_name(title)
-        # Filtrace na zaklade intervalu
-        if date < str_to_date(start_date):
-            continue
-        if end_date is not None:
-            if date > str_to_date(end_date):
-                continue
-        
-        # Filtrace na zaklade predchoziho zpracovani
-        if date in already_downloaded:
-            continue
+    titles, download_urls = select_addresses(all_titles, all_download_urls, already_downloaded, start_date, end_date)
 
-        titles.append(title)
-        download_urls.append(download_url)
     if verbosity > Verbosity.NORMAL:
         print(f'Získáno {len(download_urls)} URL adres k datovým sadám.') 
 
@@ -112,7 +119,7 @@ def download_file(title, download_url, target_dir, max_attempts, verbosity):
     # Kontrola, zda už soubor není uložen
     if skip_file(path, verbosity):
         return
-    
+
     # Samotné stažení souboru
     for attempt in range(max_attempts):
         try:
@@ -128,7 +135,7 @@ def download_file(title, download_url, target_dir, max_attempts, verbosity):
                 print('.', end='', flush=True)
 
             return
-
+        # Vyřešení chyby ve stahování
         except requests.exceptions.RequestException as e:
             if verbosity > Verbosity.NORMAL:
                 print(f'Chyba při dotazu na stahovaní souboru "{title}": {e}.')
@@ -145,12 +152,12 @@ def download_file(title, download_url, target_dir, max_attempts, verbosity):
                 raise requests.exceptions.RequestException(f'Stahování souboru "{title}" selhalo po {max_attempts} pokusech.') from e
 
 
-def download_files(download_dir, parent_dataset_iri, start_date, end_date, already_downloaded, no_threads, max_attempts, verbosity):
+# Stažení datasetu z data.gov.cz
+def download_files(sparql_endpoint, download_dir, parent_dataset_iri, start_date, end_date, already_downloaded, no_threads, max_attempts, verbosity):
     # Vytvoření adresáře pro uložení souborů
     create_directory(download_dir, verbosity)
 
     # Stažení URL adres souborů spolu s jejich názvy
-    sparql_endpoint = 'https://data.gov.cz/sparql'
     titles, download_urls = get_url_addresses(sparql_endpoint, parent_dataset_iri, start_date, end_date, already_downloaded, verbosity)
 
     # Paralelní stažení souborů
@@ -164,6 +171,41 @@ def download_files(download_dir, parent_dataset_iri, start_date, end_date, alrea
     # Nová řádka pro vizuélní odlišení konce úkonu
     if verbosity > Verbosity.QUIET:
         print('\nSTAHOVÁNÍ DONONČENO.\n')
+
+
+# Stažení seznamu stanic z data.gov.cz
+def download_stations(sparql_endpoint, download_dir, dataset_iri, verbosity):
+    # Vytvoření adresáře pro uložení souborů
+    create_directory(download_dir, verbosity)
+
+    # Definice dotazu
+    get_download_url_query = f'''
+    PREFIX dcat: <http://www.w3.org/ns/dcat#>
+    PREFIX dcterms: <http://purl.org/dc/terms/>
+
+    SELECT ?title ?downloadURL 
+    WHERE {{
+        <{dataset_iri}> dcat:distribution ?distribution.
+        ?distribution dcat:downloadURL ?downloadURL.
+    }}
+    '''
+    headers = {'Accept': 'application/sparql-results+json'}
+    params = {'query': get_download_url_query}
+
+    # Získání odpovědi ze serveru
+    if verbosity > Verbosity.QUIET:
+        print('Získávání URL adresy pro stažení seznamu stanic přes SPARQL API...')
+    response = requests.get(sparql_endpoint, params=params, headers=headers, timeout=60)
+    response.raise_for_status()  # Kontrola chyb HTTP
+
+    # Stažení souboru
+    download_url = response.json()['results']['bindings'][0]['downloadURL']['value']
+    download_file('Stanice STK a SME', download_url, download_dir, 1, verbosity)
+
+    # Nová řádka pro vizuélní odlišení konce úkonu
+    if verbosity > Verbosity.QUIET:
+        print('\nSTAHOVÁNÍ DONONČENO.\n')
+
 
 #--------------------------------------------------------------------------------------------------------------
 
@@ -292,7 +334,7 @@ def get_emisni_cast(element, namespaces):
     emise_record = {}
     emise_record['Emise_CisloProtokolu'] = safe_get(element, 'p:CisloProtokolu', namespaces)
     emise_record['Emise_DatumProhlidky'] = safe_get(element, 'p:DatumProhlidky', namespaces)
-    emise_record['Emise_Stanice_Cislo'] = safe_get(safe_find(element, 'p:Stanice', namespaces), 'p:Cislo', namespaces)
+    emise_record['Emise_StaniceCislo'] = safe_get(safe_find(element, 'p:Stanice', namespaces), 'p:Cislo', namespaces)
     emise_record.update(get_casove_udaje(safe_find(element, 'p:CasoveUdaje', namespaces), 'Emise', namespaces))
     emise_record['Emise_OdpovednaOsoba'] = safe_get(element, 'p:OdpovednaOsoba', namespaces)
     emise_record['Emise_ZakladniPalivo'] = safe_get(element, 'p:ZakladniPalivo', namespaces)
@@ -709,6 +751,108 @@ def parse_mereni(element, namespaces):
 
 #--------------------------------------------------------------------------------------------------------------
 
+# Získání základních adresních údajů
+def get_adresa_short(element, prefix, namespaces):
+    return {
+        f'{prefix}_Obec': safe_get(element, 's:Obec', namespaces),
+        f'{prefix}_Ulice': safe_get(element, 's:Ulice', namespaces),
+        f'{prefix}_Psc': safe_get(element, 's:PSC', namespaces),
+    }
+
+
+# Získání adresních údajů včetně Kraj, Okres, Orp
+def get_adresa_long(element, prefix, namespaces):
+    result = {}
+    result[f'{prefix}_Kraj'] = safe_get(element, 's:Kraj', namespaces)
+    result[f'{prefix}_Okres'] = safe_get(element, 's:Okres', namespaces)
+    result[f'{prefix}_Orp'] = safe_get(element, 's:ORP', namespaces)
+    result.update(get_adresa_short(element, prefix, namespaces))
+    return result
+
+
+# Získání kontaktních údajů
+def get_kontakt(element, prefix, namespaces):
+    return {
+        f'{prefix}_Telefon': safe_get(element, 's:Telefon', namespaces),
+        f'{prefix}_Email': safe_get(element, 's:Email', namespaces),
+    }
+
+
+# Pomocná funkce pro extrakci seznamu hodnot z Osvědčení
+def get_osvedceni_list(element, xpath, namespaces):
+    return [el.text for el in safe_findall(element, xpath, namespaces) if el.text]
+
+
+# Extrahuje data osvědčení kategorií pro konkrétní typ stanice
+def get_osvedceni_data_short(element, prefix, namespaces):
+    kategorie_set = set()
+
+    osvedceni_seznam_element = safe_find(element, 's:OsvedceniSeznam', namespaces)
+    for osvedceni_element in safe_findall(osvedceni_seznam_element, 's:Osvedceni', namespaces):
+        kategorie_set.update(get_osvedceni_list(osvedceni_element, 's:Kategorie', namespaces))
+
+    # Vrací None, pokud by byl seznam prázdný
+    return {
+        f'{prefix}_Osvedceni_Kategorie': sorted(list(kategorie_set)) if kategorie_set else None,
+    }
+
+
+# Extrahuje data osvědčení pro konkrétní typ stanice včetně EmisniSystem a Palivo (pole validní pouze pro SME)
+def get_osvedceni_data_long(element, prefix, namespaces):
+    result = get_osvedceni_data_short(element, prefix, namespaces)
+
+    emisni_system_set = set()
+    palivo_set = set()
+
+    osvedceni_seznam_element = safe_find(element, 's:OsvedceniSeznam', namespaces)
+    for osvedceni_element in safe_findall(osvedceni_seznam_element, 's:Osvedceni', namespaces):
+        emisni_system_set.update(get_osvedceni_list(osvedceni_element, 's:EmisniSystem', namespaces))
+        palivo_set.update(get_osvedceni_list(osvedceni_element, 's:Palivo', namespaces))
+
+    # Vrací None, pokud by byl seznam prázdný
+    result[f'{prefix}_Osvedceni_EmisniSystem'] = sorted(list(emisni_system_set)) if emisni_system_set else None # RIZENY / NERIZENY
+    result[f'{prefix}_Osvedceni_Palivo'] = sorted(list(palivo_set)) if palivo_set else None # BA / NM / LPG / LNG / CNG
+
+    return result
+
+
+def parse_stanice(element, namespaces):
+    # Parsování jednoho záznamu stanice
+    stanice_record = {}
+    
+    # Identifikace
+    stanice_record['Stanice_Cislo'] = safe_get(element, 's:Cislo', namespaces)
+
+    # Adresa a kontakt stanice
+    stanice_record.update(get_adresa_long(safe_find(element, 's:Adresa', namespaces), 'Stanice_Adresa', namespaces))
+    stanice_record.update(get_kontakt(safe_find(element, 's:Kontakt', namespaces), 'Stanice_Kontakt', namespaces))
+
+    # Provozovatel
+    provozovatel_element = safe_find(element, 's:Provozovatel', namespaces)
+    stanice_record['Provozovatel_Ico'] = safe_get(provozovatel_element, 's:ICO', namespaces)
+    stanice_record['Provozovatel_Nazev'] = safe_get(provozovatel_element, 's:Nazev', namespaces)
+    stanice_record.update(get_adresa_short(safe_find(provozovatel_element, 's:Adresa', namespaces), 'Provozovatel_Adresa', namespaces))
+    stanice_record.update(get_kontakt(safe_find(provozovatel_element, 's:Kontakt', namespaces), 'Provozovatel_Kontakt', namespaces))
+
+    # Zpracování typů stanic a jejich specifických osvědčení
+    druh_element = safe_find(element, 's:Druh', namespaces)
+    
+    # Mapování XML elementů na prefixy sloupců
+    types_map = {'s:KontrolniStanice': 'Stk', 's:ZkusebniStanice': 'SmeZkusebni', 's:EmisniStanice': 'Sme', 's:AdrStanice': 'Adr'}
+    for tag, prefix in types_map.items():
+        type_element = safe_find(druh_element, tag, namespaces)
+        # Indikátor zda je stanice daného typu
+        stanice_record[f'{prefix}_Pritomno'] = str(type_element is not None)
+        # Pro SME je slodováno více polí
+        if prefix == 'Sme':
+            stanice_record.update(get_osvedceni_data_long(type_element, prefix, namespaces))
+        else:
+            stanice_record.update(get_osvedceni_data_short(type_element, prefix, namespaces))
+
+    return stanice_record
+
+#--------------------------------------------------------------------------------------------------------------
+
 def parse_to_parquet(source_dir, file_parser, no_threads, verbosity, delete):
     # Vyhledání souborů pro parsování
     xml_files = sorted(list(source_dir.glob('*.xml')), key=date_from_file_path)
@@ -899,6 +1043,84 @@ def parse_measurements_to_parquet(dataset_dir, measurements_subdir, no_threads, 
 
 #--------------------------------------------------------------------------------------------------------------
 
+def parse_stations_file(target_dir, xml_file, namespaces, verbosity, delete):
+    # Definice cesty k uložení souboru
+    target_path = (target_dir / xml_file.stem).with_suffix('.parquet')
+    
+    # Kontrola, zda rozparsovaný soubor již existuje
+    if skip_file(target_path, verbosity):
+        return
+
+    stanice_batch = []
+
+    try:
+        # Načtení stromu
+        tree = etree.parse(xml_file)
+        
+        # Přímý přístup k DatovyObsah a StaniceSeznam (dle poskytnuté struktury XML)
+        datovy_obsah = tree.find('d:DatovyObsah', namespaces)
+        stanice_list_element = safe_find(datovy_obsah, 's:StaniceSeznam', namespaces)
+        
+        if stanice_list_element is None:
+             raise KeyError(f'V souboru "{xml_file}" chybí element DatovyObsah nebo StaniceSeznam')
+
+        # Iterace přes stanice
+        for element in stanice_list_element.iterchildren(tag=f'{{{namespaces["s"]}}}Stanice'):
+            stanice_record = parse_stanice(element, namespaces)
+            if stanice_record:
+                stanice_batch.append(stanice_record)
+            # Uvolnění paměti elementu
+            element.clear()
+        
+        # Uvolnění celého stromu
+        del tree
+
+        # Zapsání souboru na disk
+        write_batch(target_dir, stanice_batch, xml_file.stem)
+
+        if verbosity > Verbosity.NORMAL:
+            print(f'Zapisuji stanice z: "{xml_file.stem}".')
+        elif verbosity > Verbosity.QUIET:
+            print('.', end='', flush=True)
+
+    except Exception as e:
+        print(f'Chyba při parsování "{xml_file}": {e}')
+        return
+
+    # Smazání původního souboru
+    if delete:
+        delete_path(xml_file, verbosity)
+
+
+def parse_stations_to_parquet(dataset_dir, stations_subdir, verbosity, delete=True):
+    # Definice jmenných prostorů
+    namespaces = {
+        's': 'istp:opendata:schemas:StaniceSeznam:v1',
+        'd': 'istp:opendata:schemas:DatovaSada:v1'
+    }
+
+    # Nastavení repozitářů
+    parquet_dir = dataset_dir / 'parquet'
+    stations_dir = parquet_dir / stations_subdir
+    create_directory(stations_dir, verbosity)
+
+    # Vyhledání souborů
+    xml_dir = dataset_dir / 'xml'
+    xml_files = sorted(list(xml_dir.glob('*.xml')))
+
+    if verbosity > Verbosity.QUIET:
+        print(f'Nalezeno {len(xml_files)} souborů stanic.')
+
+    # Sériové zpracování (soubor je jen jeden)
+    for xml_file in xml_files:
+        parse_stations_file(stations_dir, xml_file, namespaces, verbosity, delete)
+
+    # Nová řádka pro vizuální odlišení konce úkonu
+    if verbosity > Verbosity.QUIET:
+        print('\nPARSOVÁNÍ STANIC DOKONČENO.\n')
+
+#--------------------------------------------------------------------------------------------------------------
+
 # UDELAT VICEPROCESOVE, AZ BUDE FILTRACE VICE NEZ DIESELU
 def split_measurements(mereni_dir, prohlidky_dir, diesel_dir, verbosity):
     # Vytvoření množin obsahujících požadované záznamy na základě datasetu prohlídek
@@ -968,16 +1190,17 @@ def split_measurements(mereni_dir, prohlidky_dir, diesel_dir, verbosity):
     if verbosity > Verbosity.QUIET:
         print('\nFILTROVÁNÍ DONONČENO.\n')
 
-
 #--------------------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
     # Definice konstant
+    SPARQL_ENDPOINT = 'https://data.gov.cz/sparql'
     INSPECTIONS_DIR = Path('kod/data/prohlidky_vozidel_stk_a_sme')
     PARENT_DATASET_INSPECTIONS = 'https://data.gov.cz/zdroj/datové-sady/66003008/9c95ebdba1dc7a2fbcfc5b6c07d25705'
     MEASUREMENTS_DIR = Path('kod/data/data_z_mericich_pristroju')
-    # MEASUREMENTS_DIR = Path('kod/data/data_z_mericich_pristroju/data_z_mericich_pristoroju')
     PARENT_DATASET_MEASUREMENTS = 'https://data.gov.cz/zdroj/datové-sady/66003008/e8e07fa264f3bd2179be03381ec324de'
+    STATIONS_DIR = Path('kod/data/stanice_stk_a_sme')
+    DATASET_STATIONS = 'https://data.gov.cz/zdroj/datové-sady/66003008/05660b2a9412493bc68940a86b4821fc'
     START_DATE = '01-01-2019'
     END_DATE = None
     NO_DOWNLOAD_THREADS = 30
@@ -991,19 +1214,27 @@ if __name__ == '__main__':
     MEASUREMENTS_ALL_SUBDIR = 'mereni_all'
     NO_PARSE_PROCESSES = 4
     DIESEL_SUBDIR = 'nafta_osobni'
+    STATIONS_SUBDIR = 'stanice'
 
 
     explain_verbosity(VERBOSITY)
 
     # print('——————————————————————————————————PROHLÍDKY VOZIDEL STK A SME:——————————————————————————————————\n')
     # downloaded_inspection_dates = downloaded_dates([INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR])
-    # download_files(INSPECTIONS_DIR / 'gz', PARENT_DATASET_INSPECTIONS, START_DATE, END_DATE, downloaded_inspection_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
+    # download_files(SPARQL_ENDPOINT, INSPECTIONS_DIR / 'gz', PARENT_DATASET_INSPECTIONS, START_DATE, END_DATE, downloaded_inspection_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
     # extract_files(INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
     # parse_inspections_to_parquet(INSPECTIONS_DIR, INSPECTIONS_SUBDIR, DEFECTS_SUBDIR, ACTIONS_SUBDIR, ADR_TYPE_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)
 
-    # print('\n——————————————————————————————————DATA Z MĚŘÍCÍCH PŘÍSTROJŮ:——————————————————————————————————\n')
+    # print('\n————————————————————————————————DATA Z MĚŘÍCÍCH PŘÍSTROJŮ:————————————————————————————————————\n')
     # downloaded_measurement_dates = downloaded_dates([MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_ALL_SUBDIR])
-    # download_files(MEASUREMENTS_DIR / 'gz', PARENT_DATASET_MEASUREMENTS, START_DATE, END_DATE, downloaded_measurement_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
+    # download_files(SPARQL_ENDPOINT, MEASUREMENTS_DIR / 'gz', PARENT_DATASET_MEASUREMENTS, START_DATE, END_DATE, downloaded_measurement_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
     # extract_files(MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
     # parse_measurements_to_parquet(MEASUREMENTS_DIR, MEASUREMENTS_ALL_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)
-    split_measurements(MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_ALL_SUBDIR, INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR, MEASUREMENTS_DIR / 'parquet' / DIESEL_SUBDIR, VERBOSITY)
+    # split_measurements(MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_ALL_SUBDIR, INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR, MEASUREMENTS_DIR / 'parquet' / DIESEL_SUBDIR, VERBOSITY)
+    
+    # print('—————————————————————————————————Stanice STK a SME:—————————————————————————————————————————————\n')
+    # # Seznam stanic prochází denní aktualizací
+    clear_folder(STATIONS_DIR, VERBOSITY)
+    download_stations(SPARQL_ENDPOINT, STATIONS_DIR / 'gz', DATASET_STATIONS, VERBOSITY)
+    extract_files(STATIONS_DIR / 'gz', STATIONS_DIR / 'xml', 1, verbosity=VERBOSITY)
+    parse_stations_to_parquet(STATIONS_DIR, STATIONS_SUBDIR, VERBOSITY, delete=False)

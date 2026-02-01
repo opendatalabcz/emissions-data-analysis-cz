@@ -15,6 +15,7 @@ sjednotit jazyk pro pojmenovani souboru a promennych
 TODO MOZNA
 neosobni vozidla
 RSV_vypis_vozidel_20251101.csv
+prohlidka dalsi datasety do jednoho -> zjednoduseni parquet struktury pro vsechny
 
 
 ANALYZOVAT:
@@ -61,6 +62,8 @@ brat v potaz m1g vozidla?
 refaktorovan kod
 cisla protokolu neodpovidala (nuly vepredu)
 vetsina prace je smazana - zjistovani vlasti a vyznamu promennych
+vscode hodne padal a kernely se nechtely restartovat
+pridani stazeni zparsování stanic
 
 zajmavosti:
     - u dat prohlidky nekdy date jindy datetime
@@ -72,3 +75,7 @@ Metodika rozlišuje 4 hlavní kategorie vozidel podle toho, jak kombinují zdroj
 2. Duální vozidla: Specifikum pro diesely s přidaným plynem. Motor běží vždy na naftu (základ) a plyn se pouze přidává do sání. Nelze jet čistě na plyn.
 3. Flexifuel: Vozidlo s jednou nádrží na proměnlivou směs paliv (typicky Benzín + Ethanol E85). Řídicí jednotka se sama přizpůsobí aktuálnímu složení.
 4. Hybridy (HEV): Spalovací motor + elektromotor. Pro emise je klíčový spalovací motor, který se často musí přepnout do speciálního servisního módu, aby běžel trvale,.
+
+
+ZEPTAT SE:
+analyzovat vsechny stanice nebo pouze nezanikle
