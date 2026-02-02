@@ -86,3 +86,11 @@ nejak vyresit elektricke hybridy
 vyresit auto predelane na plyn - vuci cemu se to pak meri
 
 pronajmout server
+
+
+5.
+mala kapitola o rozdilnych vim
+v prvni kapitole vysvetlit metodiku - co zkoumam a na co se zamerit
+napsat email sazbo aby si precetl kapitolu
+napsat bokem veci na tdp
+podivat se proc tech 104 jeli na jinou stanici

@@ -1219,21 +1219,21 @@ if __name__ == '__main__':
 
     explain_verbosity(VERBOSITY)
 
-    # print('——————————————————————————————————PROHLÍDKY VOZIDEL STK A SME:——————————————————————————————————\n')
-    # downloaded_inspection_dates = downloaded_dates([INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR])
-    # download_files(SPARQL_ENDPOINT, INSPECTIONS_DIR / 'gz', PARENT_DATASET_INSPECTIONS, START_DATE, END_DATE, downloaded_inspection_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
-    # extract_files(INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
-    # parse_inspections_to_parquet(INSPECTIONS_DIR, INSPECTIONS_SUBDIR, DEFECTS_SUBDIR, ACTIONS_SUBDIR, ADR_TYPE_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)
+    print('——————————————————————————————————PROHLÍDKY VOZIDEL STK A SME:——————————————————————————————————\n')
+    downloaded_inspection_dates = downloaded_dates([INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR])
+    download_files(SPARQL_ENDPOINT, INSPECTIONS_DIR / 'gz', PARENT_DATASET_INSPECTIONS, START_DATE, END_DATE, downloaded_inspection_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
+    extract_files(INSPECTIONS_DIR / 'gz', INSPECTIONS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
+    parse_inspections_to_parquet(INSPECTIONS_DIR, INSPECTIONS_SUBDIR, DEFECTS_SUBDIR, ACTIONS_SUBDIR, ADR_TYPE_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)
 
-    # print('\n————————————————————————————————DATA Z MĚŘÍCÍCH PŘÍSTROJŮ:————————————————————————————————————\n')
-    # downloaded_measurement_dates = downloaded_dates([MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_ALL_SUBDIR])
-    # download_files(SPARQL_ENDPOINT, MEASUREMENTS_DIR / 'gz', PARENT_DATASET_MEASUREMENTS, START_DATE, END_DATE, downloaded_measurement_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
-    # extract_files(MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
-    # parse_measurements_to_parquet(MEASUREMENTS_DIR, MEASUREMENTS_ALL_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)
-    # split_measurements(MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_ALL_SUBDIR, INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR, MEASUREMENTS_DIR / 'parquet' / DIESEL_SUBDIR, VERBOSITY)
+    print('\n————————————————————————————————DATA Z MĚŘÍCÍCH PŘÍSTROJŮ:————————————————————————————————————\n')
+    downloaded_measurement_dates = downloaded_dates([MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_ALL_SUBDIR])
+    download_files(SPARQL_ENDPOINT, MEASUREMENTS_DIR / 'gz', PARENT_DATASET_MEASUREMENTS, START_DATE, END_DATE, downloaded_measurement_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
+    extract_files(MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
+    parse_measurements_to_parquet(MEASUREMENTS_DIR, MEASUREMENTS_ALL_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)
+    split_measurements(MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_ALL_SUBDIR, INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR, MEASUREMENTS_DIR / 'parquet' / DIESEL_SUBDIR, VERBOSITY)
     
-    # print('—————————————————————————————————Stanice STK a SME:—————————————————————————————————————————————\n')
-    # # Seznam stanic prochází denní aktualizací
+    print('—————————————————————————————————Stanice STK a SME:—————————————————————————————————————————————\n')
+    # Seznam stanic prochází denní aktualizací
     clear_folder(STATIONS_DIR, VERBOSITY)
     download_stations(SPARQL_ENDPOINT, STATIONS_DIR / 'gz', DATASET_STATIONS, VERBOSITY)
     extract_files(STATIONS_DIR / 'gz', STATIONS_DIR / 'xml', 1, verbosity=VERBOSITY)
