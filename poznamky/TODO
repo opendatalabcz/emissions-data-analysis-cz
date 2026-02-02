@@ -11,11 +11,13 @@ sjednotit vypisy pri spusteni celeho
 feature engineering - delka misto konce - zacatek zda svatek, rocni obdobi, cas dne
 ; lepe oddelit uzitkova vozidla - hodne traktoru
 sjednotit jazyk pro pojmenovani souboru a promennych
+pripojit prohlidky mereni, ktera maji oddelenou prohlidku
 
 TODO MOZNA
 neosobni vozidla
 RSV_vypis_vozidel_20251101.csv
 prohlidka dalsi datasety do jednoho -> zjednoduseni parquet struktury pro vsechny
+Obd_Vin ma pravdu?
 
 
 ANALYZOVAT:
@@ -64,12 +66,14 @@ cisla protokolu neodpovidala (nuly vepredu)
 vetsina prace je smazana - zjistovani vlasti a vyznamu promennych
 vscode hodne padal a kernely se nechtely restartovat
 pridani stazeni zparsování stanic
+kontrola konzistence napric datasety
 
 zajmavosti:
     - u dat prohlidky nekdy date jindy datetime
     - pristi prohlidka obcas obsahuje T
 
 
+projit ukoly na tdp
 Metodika rozlišuje 4 hlavní kategorie vozidel podle toho, jak kombinují zdroje energie:
 1. Vícepalivová (Bi-fuel): Nejčastější typ (Benzín + LPG/CNG). Má dvě oddělené nádrže a může přepínat paliva. Řízení funguje na principu Master-Slave, kde hlavní (benzínová) jednotka řídí tu plynovou,.
 2. Duální vozidla: Specifikum pro diesely s přidaným plynem. Motor běží vždy na naftu (základ) a plyn se pouze přidává do sání. Nelze jet čistě na plyn.
@@ -79,3 +83,4 @@ Metodika rozlišuje 4 hlavní kategorie vozidel podle toho, jak kombinují zdroj
 
 ZEPTAT SE:
 analyzovat vsechny stanice nebo pouze nezanikle
+zahodit extremni hodnoty, nebo je nahradit null
