@@ -67,6 +67,7 @@ vetsina prace je smazana - zjistovani vlasti a vyznamu promennych
 vscode hodne padal a kernely se nechtely restartovat
 pridani stazeni zparsování stanic
 kontrola konzistence napric datasety
+migrace na overleaf
 
 zajmavosti:
     - u dat prohlidky nekdy date jindy datetime
