@@ -24,6 +24,12 @@ ANALYZOVAT:
 zda se v case zlepsuje compliance
 zda stanice s podvodnymi zaznami maji i poctive
 
+pocty prohlidek konkretnich techniku
+doby prohlidek
+dlouhe doby akcelerace, kdy vozidlo proslo
+pruchodnost na stanicich
+dukazy emulatoru shodnymi hodnotami akceleraci
+
 
 
 
@@ -85,3 +91,7 @@ Metodika rozlišuje 4 hlavní kategorie vozidel podle toho, jak kombinují zdroj
 ZEPTAT SE:
 analyzovat vsechny stanice nebo pouze nezanikle
 zahodit extremni hodnoty, nebo je nahradit null
+
+
+ZEPTAT SE
+mel bych kontaktovat petra novaka
