@@ -104,3 +104,7 @@ beamer sablona
         - neni vetsinou prohlizecu podporovane
     - nepovinny parametr dokumentu, ktery umoznuje tisknout jenom nektere slidy - napr. handout
         - u slidu potom <handout>
+
+
+NAPADY:
+rict, ze kontrola funkci statu skrze analyzu otevrenych dat vnimam jako krok k moderni demokracii a transparentnosti

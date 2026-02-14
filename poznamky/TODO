@@ -12,6 +12,12 @@ feature engineering - delka misto konce - zacatek zda svatek, rocni obdobi, cas 
 ; lepe oddelit uzitkova vozidla - hodne traktoru
 sjednotit jazyk pro pojmenovani souboru a promennych
 pripojit prohlidky mereni, ktera maji oddelenou prohlidku
+pridat wwh-obd
+odstranit prebytecne zkratky a doplnit zkratky, ktere chybi
+xml, zip, xsd, lpg, cng, nm, ba, adr, orp, adr, tsk
+prepsat, kdy co bylo citovano
+citace 20 % z nemecka primarni zdroj
+
 
 TODO MOZNA
 neosobni vozidla
@@ -29,6 +35,12 @@ doby prohlidek
 dlouhe doby akcelerace, kdy vozidlo proslo
 pruchodnost na stanicich
 dukazy emulatoru shodnymi hodnotami akceleraci
+
+uspesnost prohlidky x delka akceleraci
+technici kteri akceleruji pomalu
+lze nekde najit detailni protokoly
+dopocotat lambdu
+vuce nez 100 procemt kysliku
 
 
 
@@ -93,5 +105,13 @@ analyzovat vsechny stanice nebo pouze nezanikle
 zahodit extremni hodnoty, nebo je nahradit null
 
 
+
+UDElANO
+psana prace
+analyzovan predchozi reseni
+
 ZEPTAT SE
 mel bych kontaktovat petra novaka
+pridat wwh-obd
+muzu dat do prace jmeno, kdyz je to verejne dostupne
+
