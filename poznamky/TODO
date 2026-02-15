@@ -13,10 +13,17 @@ feature engineering - delka misto konce - zacatek zda svatek, rocni obdobi, cas 
 sjednotit jazyk pro pojmenovani souboru a promennych
 pripojit prohlidky mereni, ktera maji oddelenou prohlidku
 pridat wwh-obd
-odstranit prebytecne zkratky a doplnit zkratky, ktere chybi
-xml, zip, xsd, lpg, cng, nm, ba, adr, orp, adr, tsk
-prepsat, kdy co bylo citovano
+
+PRACE:
 citace 20 % z nemecka primarni zdroj
+typografii pohlidat - nerozdelitelne mezery, aby nebyla samostatna slova na koci radek
+predejit samostatnym radkum na konci stranky
+odstranit prebytecne zkratky a doplnit zkratky, ktere chybi
+prepsat, kdy co bylo citovano
+bibliografie:
+    - místo zkratky b. r. doplňte datum vzniku, poslední aktualizace nebo alespoň copyright
+    - u zákonů doplňte autora ČR nebo Česká republika
+dusledneji citovat kapitolu 1 - zepatat se ai, jak to delat nejlepe
 
 
 TODO MOZNA
