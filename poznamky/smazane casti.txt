@@ -1,0 +1,147 @@
+\subsection{Stanice STK a SME}
+Datová sada ,,Stanice STK a SME`` představuje seznam všech subjektů oprávněných k provádění technických prohlídek a měření emisí v České republice. Tento seznam podléhá denní aktualizaci a je distribuován ve formátu XML, jehož struktura striktně odpovídá definovanému schématu XSD (viz~\ref{xsd:stanice_STK_a_SME}).~\cite{mdcr_opendata_stanice}
+
+Jednotlivé záznamy v datové sadě obsahují následující položky:
+\begin{itemize}
+    \item \textbf{Identifikační údaje:} Unikátní číslo stanice.
+    \item \textbf{Geografická identifikace:} Detailní informace o poloze stanice. Obsahuje informace o kraji, okrese, obci s rozšířenou působností, ulici a poštovním směrovacím čísle.
+    \item \textbf{Kontaktní údaje:} Email a telefonní číslo na stanici.
+    \item \textbf{Údaje o provozovateli:} Právní identifikace subjektu zahrnující název, IČO a sídlo. Součástí údajů o provozovateli jsou i kontaktní údaje provozovatele.
+    \item \textbf{Funkční klasifikace:} Definice typu stanice (\emph{KontrolniStanice}\footnote{Standardní stanice technické kontroly (STK) určené pro pravidelné prohlídky.}, \emph{ZkusebniStanice}\footnote{Pracoviště provádějící technické prohlídky před schválením technické způsobilosti vozidla, například po přestavbě nebo individuálním dovozu.}, \emph{EmisniStanice}\footnote{Stanice měření emisí (SME) oprávněná ke kontrole emisních systémů a měření koncentrací škodlivin nebo kouřivosti.}, \emph{AdrStanice}\footnote{Specializovaná pracoviště určená pro technické prohlídky vozidel určených k přepravě nebezpečných věcí v režimu dohody ADR.}).
+\end{itemize}
+
+V rámci analýzy emisních kontrol je klíčový blok \emph{EmisniStanice}, který svou přítomností indikuje oprávnění dané stanice operovat jako stanice měření emisí. Tento blok prostřednictvím seznamu osvědčení (\emph{OsvedceniSeznam}) definuje technické kompetence daného pracoviště:
+
+\begin{itemize}
+    \item \textbf{Emisní systémy:} Rozlišení oprávnění pro měření neřízených (\emph{NERIZENY}) a řízených (\emph{RIZENY}) systémů.
+    \item \textbf{Paliva:} Typy pohonných hmot, pro které je stanice certifikována (např.~\emph{BA} – benzín, \emph{NM} – nafta, \emph{LPG}, \emph{CNG}).
+    \item \textbf{Kategorie vozidel:} Výčet vozidlových tříd, pro které stanice disponuje schválením (např.~\emph{M1}, \emph{N1}, \emph{L}, \emph{T}).
+\end{itemize}
+
+Příklad datového záznamu ilustrujícího strukturu záznamu je uveden v příloze (viz~\ref{příklad:stanice_STK_a_SME}).~\cite{mdcr_opendata_stanice}
+
+%---------------------------------------------------------------
+\subsection{Prohlídky vozidel STK a SME} \label{prohlídky_vozidel_STK_a_SME}
+Datová sada „Prohlídky vozidel STK a SME“ představuje zdroj informací o výsledcích technických kontrol a emisních měření. Jedná se o datovou sérii publikovanou v denních intervalech, kde každá jednotlivá datová sada zachycuje detailní průběh úkonů provedených daný den. Struktura dat je definována schématem XSD (viz~\ref{xsd:prohlídky_vozidel_STK_a_SME}), které vynucuje striktní strukturu záznamů v datové sadě, čímž výrazně ulehčuje počítačové zpracování.~\cite{mdcr_opendata_prohlidky}
+
+Záznam o prohlídce lze rozdělit do následujících logických celků:
+\begin{itemize}
+    \item \textbf{Identifikační údaje:} Obsahují číslo protokolu, údaje o druhu prohlídky a identifikaci odpovědné osoby, která informace do systému zanesla.
+    \item \textbf{Stanice:} Číslo stanice, na základě kterého lze vyhledat dodatečné podrobnosti v datové sadě popsané v předchozí kapitole. Zároveň se v této kategorii nachází některé informace o adrese stanice.
+    \item \textbf{Časové údaje:} Obsahuje datum provedení prohlídky, spolu s časy zahájení a ukončení prohlídky s přesností na milisekundy.
+    \item \textbf{Identifikace vozidla:} Zahrnuje parametry VIN, druh (např. \emph{OSOBNÍ AUTOMOBIL}), kategorii (např.: \emph{M1}), provedení (např.: \emph{AC KOMBI}), značku (např.: \emph{ŠKODA}), obchodní označení (např.: \emph{FABIA COMBI}) a typ motoru (např.: \emph{AQW}).
+    \item \textbf{Registrace (\emph{Registrace}):} Samostatný blok pro evidenci data první registrace vozidla, státu registrace a čísla dokladu registrace.
+    \item \textbf{Emisní část (\emph{EmisniCast}):} Tato sekce je kritická pro analýzu integrity měření, obsahuje informace o samotné emisní části. Hlubší detaily jsou k nalezení v datové sadě popsané v další sekci.
+    \begin{itemize}
+        \item \textbf{Číslo protokolu emisí}
+        \item \textbf{Časové údaje}
+        \item \textbf{Číslo stanice:} Zde dochází k odchylce od definice v XSD schématu, které u stanice vyžaduje i geografické údaje, jež v reálných datech chybí.
+        \item \textbf{Odpovědná osoba}
+        \item \textbf{Informace o palivech:} \emph{ZakladniPalivo}, \emph{AlternativniPalivo}
+        \item \textbf{Emisní systém:} např. \emph{Řízený s OBD}.
+        \item Další pole definovaná v XSD, která se v datech vyskytují zřídka: \emph{výrobce motoru}, \emph{číslo motoru} a \emph{rok výroby}. Součástí je také identifikace stanice a odpovědné osoby. Díky číslu protokolu je tato část přímo spárovatelná s daty z měřicích přístrojů.
+    \end{itemize}
+    \item \textbf{TechnickaCast:} Zaznamenává čas začátku, konce a zodpovědnou osobu.
+    \item \textbf{AdrCast:} Specializovaný oddíl pro kontroly vozidel přepravujících nebezpečné věci.
+    \item \textbf{TskCast:} Slouží k evidenci výsledků technických silničních kontrol provedených v provozu. Zahrnuje časové údaje, odpovědnou osobu a seznam provedených kontrolních úkonů.
+    \item \textbf{Vysledek:} Segment shrnující vyústění prohlídky.
+    \begin{itemize}
+        \item \textbf{Odometr:} Počet najetých kilometrů vozidla.
+        \item \textbf{Závady:} \emph{Kód} a \emph{závažnost} nalezených závad.
+        \item \textbf{Poznámka:} Záznam o nestandardním nálezu (např.: \emph{Vozidlo bez SPZ,dovoz Belgie.}).
+        \item \textbf{Datum příští prohlídky:} Pro úspěšné prohlídky.
+        \item \textbf{Nálepka vylepena:} Binární hodnota, zda byla nálepka vylepena.
+        \item \textbf{Celkový výsledek:} Kód představující výsledek prohlídky.
+    \end{itemize}
+\end{itemize}
+
+Příklad konkrétního záznamu pravidelné prohlídky je uveden v příloze (viz~\ref{příklad:prohlídky_vozidel_STK_a_SME}).~\cite{mdcr_opendata_prohlidky}
+
+%---------------------------------------------------------------
+\subsection{Data z měřicích přístrojů získaných při měření emisí}
+
+Datová sada ,,Data z měřicích přístrojů`` představuje nejdetailnější úroveň informací o průběhu emisního měření. Oproti předchozím datovým zdrojům je její struktura výrazně komplikovanější. Ačkoliv je formálně definována pomocí schématu XSD, toto schéma je velmi neurčité a umožňuje značnou variabilitu konkrétních záznamů (viz~\ref{xsd:data_z_měřících_přístrojů_získaných_při_měření_emisí}).
+
+XSD nedefinuje jednoznačně povinnost výskytu některých prvků, umožňuje jejich opakování a často neomezuje jejich kombinace. Výsledkem je vysoká heterogenita reálných dat. Parsování proto nebylo možné realizovat pouze na základě schématu, ale vyžadovalo reverzní analýzu skutečných XML souborů a empirické zjišťování, jaké strukturální varianty se v praxi vyskytují. Tento proces byl komplikován značnou variací mezi jednotlivými záznamy – některé bloky se vyskytují pouze pro určité typy paliva, jiné jsou přítomny jen u části měření, případně obsahují rozdílný počet poduzlů.~\cite{mdcr_opendata_merici_pristroje}
+
+Záznam o měření lze shrnout do následující struktury:
+
+\begin{itemize}
+    \item \textbf{Identifikace měření:}
+    \begin{itemize}
+        \item \emph{CisloProtokolu}.
+        \item Identifikace stanice (\emph{Cislo}).
+        \item Časové údaje (\emph{DatumProhlidky}, \emph{Zahajeni}, \emph{Ukonceni}).
+        \item \emph{OdpovednaOsoba}.
+    \end{itemize}
+
+    \item \textbf{Měřicí přístroj (\emph{mericiPristroj}):}
+    \begin{itemize}
+        \item \emph{vyrobce}, \emph{typ}, \emph{verze}, \emph{verzeSoftware}.
+        \item Informace o podpoře \emph{OBD}.
+    \end{itemize}
+
+    \item \textbf{Identifikace vozidla (\emph{vozidlo}):} Následující pole jsou v praxi často zadávána ručně, což vede k nižší strojové zpracovatelnosti oproti datové sadě prohlídek.
+    \begin{itemize}
+        \item \emph{VIN}.
+        \item \emph{tovazniZnacka}, \emph{typVozidla}.
+        \item \emph{typMotoru}, \emph{cisloMotoru}.
+        \item \emph{stavTachometru}.
+        \item \emph{rokVyroby}, \emph{datumPrvniRegistrace}.
+        \item \emph{palivo}.
+    \end{itemize}
+
+    \item \textbf{Výsledek měření (\emph{vysledekMereni}):}
+    \begin{itemize}
+        \item \emph{vysledekVisualniKontroly}.
+        \item \emph{vysledekReadiness}.
+        \item \emph{vysledekRidiciJednotka}, \emph{vysledekRidiciJednotkaStav}.
+        \item \emph{vysledekMIL} (\emph{Malfunction Indicator Lamp}).
+        \item \emph{vysledekTesnostPlynovehoZarizeni}.
+        \item \emph{vyhovuje} a atribut \emph{pristiProhlidka}.
+        \item Seznam závad (\emph{zavady/kod}).
+    \end{itemize}
+
+    \item \textbf{Emisní systém (\emph{emisniSystem}):}
+    \begin{itemize}
+        \item \emph{rizenyOBD}, \emph{rizeny}, \emph{nerizeny}.
+        \item V případě \emph{rizenyOBD}:
+        \begin{itemize}
+            \item \emph{komunikacniProtokol}.
+            \item \emph{pocetDTC}, \emph{vzdalenostDTC}, \emph{casDTC}.
+            \item Výpis kódů (\emph{vypisDTC}).
+            \item \emph{readiness} včetně monitorů:
+            \begin{itemize}
+                \item \emph{OBDzazeh}.
+                \item \emph{OBDvznet}.
+                \item \emph{J1939}.
+            \end{itemize}
+            Každý monitor je reprezentován atributy \emph{podporovano} a \emph{otestovano}.
+        \end{itemize}
+    \end{itemize}
+
+    \item \textbf{Detail měření dle typu paliva:}
+    \begin{itemize}
+        \item \emph{detailBenzin:} Celý blok může být opakován pro více vyústění (výfuků).
+        \begin{itemize}
+            \item Kategorie \emph{otackyVolnobezne}, \emph{otackyZvysene}.
+            \item Měřené veličiny: \emph{CO}, \emph{CO2}, \emph{COCOOR}, \emph{HC}, \emph{NOX}, \emph{O2}, \emph{N}, \emph{LAMBDA} a \emph{TPS} pro volnoběžné i zvýšené otáčky.
+            \item U některých veličin evidovány i mezní hodnoty (\emph{min}, \emph{max}).
+        \end{itemize}
+
+        \item \emph{detailNafta}
+        \begin{itemize}
+            \item Limitní část s hodnotami definující minima případně maxima hodnot (\emph{otackyVolnobezne}, \emph{otackyPrebehove}, \emph{casAkcelerace}, \emph{kourivost}).
+            \item Několik vyústění, kde každé obsahuje několik opakování \emph{mereni}, definovaných v metodice a jejich průměr \emph{mereniPrumer}.
+            \item Sledované veličiny v každém měření: \emph{Kourivost}, \emph{OtackyVolnobezne}, \emph{OtackyPrebehove}, \emph{CasAkcelerace}, \emph{Teplota} a \emph{TPS}.
+        \end{itemize}
+
+        \item \emph{detailPlyn}:
+        \begin{itemize}
+            \item Struktura obdobná \emph{detailBenzin}.
+            \item Doplněna část \emph{nadrz} s atributy \emph{vyrobce}, \emph{homologace}, \emph{zivotnost}, \emph{kontrola}.
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+Příklad dat z měření přístrojů pro dieselové vozidlo se čtyřmi měřeními je uveden v příloze (viz~\ref{příklad:data_z_měřících_přístrojů_získaných_při_měření_emisí}).~\cite{mdcr_opendata_merici_pristroje}
