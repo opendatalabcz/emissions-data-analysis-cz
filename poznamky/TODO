@@ -17,7 +17,7 @@ merenizazehove + merenivznetove zminit v poslednim odstavci
 
 
 PRACE:
-citace 20 % z nemecka primarni zdroj - spise 6 %
+$citace 20 % z nemecka primarni zdroj - spise 6 %
 typografii pohlidat - nerozdelitelne mezery, aby nebyla samostatna slova na koci radek
 predejit samostatnym radkum na konci stranky
 odstranit prebytecne zkratky a doplnit zkratky, ktere chybi (napr COCOOR)
@@ -135,12 +135,12 @@ novak kontaktovan
 
 SCHUZE
 prohodit prvni dve kapitoly
-vyhodit cleneni prace
+$vyhodit cleneni prace
 konkretnejsi cile - neco meritelneho
 dat vedet, pokud bych napsal dalsi kapitolu
 - pridat diagram k datum - z kterych zdroju ziskavam data
 podlozit proc jsou stanice poctive
-mirnejsi verze prvniho mailu - podvodu v uvodu - lepsi nez verejna diskuse
+$mirnejsi verze prvniho mailu - podvodu v uvodu - lepsi nez verejna diskuse
 zreplikovat, co ma + pridat
 podekovani pridat novak
 predikkcni model porovnat s STK - vzit stejne featury - predchozi bakalarka
