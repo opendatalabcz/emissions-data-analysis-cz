@@ -36,6 +36,7 @@ def cast_mereni(df):
         pl.col('^.*Hodnota$').str.strip_chars().cast(pl.Float32),
         pl.col('^.*Vysledek$').exclude('Obd_Readiness_Vysledek').cast(pl.Int8),
         pl.col('^.*Pritomno$').replace_strict(bool_map, return_dtype=pl.Boolean),
+        pl.col('^.*PocetVyusteni$').cast(pl.Int8),
     ])
 
 
