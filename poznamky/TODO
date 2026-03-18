@@ -147,3 +147,28 @@ zreplikovat, co ma + pridat
 $predikkcni model porovnat s STK - vzit stejne featury - predchozi bakalarka
 pridat hlavicku emise do stk portalu - zajistit updatovani
 - lze prepojit na autora, pokud neco
+
+SCHUZE
+rict:
+upravena prace - prosel jsem znovou a zvalidoval vse
+pridan obrazek, pridana kapitola o emisnich prvcich
+tvorba modelu - analyza dulezitosti stanic
+vysvetlovana promenna prirazena
+upravil jsem v latexu veci, ktere jsem odkladal - jako spatne renderovani hacku v xml, nezalamovani, sjednoceni formatu
+
+otazky:
+jak resit ruzne miry obd - vice modelu?
+jak resit ruzne limity - procenta?
+
+odpovedi:
+pridat bez obd kdyztak na konci, kdyz zbyde cas
+pouzit catboost jako v predchozi bakalarce
+pouzivat scikit learn
+feature importance
+- urci zda nechat priznaky
+vybrat, co urcite nebude priznakem
+trenovat na vzorku dat - statisice dat
+nejdrive udelat baseline model
+nedavat informace z budoucnosti - odstranit cas do pristi kontroly
+dat vsechny typy prohlidek a nechat feacuru
+BASELINE MODEL - v praci rict, proc jsem timto zacal - proc jsem tak postupoval
