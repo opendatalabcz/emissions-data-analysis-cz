@@ -16,6 +16,10 @@ pripojit prohlidky mereni, ktera maji oddelenou prohlidku
 merenizazehove + merenivznetove zminit v poslednim odstavci
 podekovani pridat novak
 vzit v potaz administrativniopravu
+promitnout zmeny do schemat atd.
+odstranit TODO ze vsech souboru
+zrobustnit parser - logovani misto error
+- revidovat vsechny try excepty
 
 
 
@@ -31,6 +35,13 @@ bibliografie:
 dusledneji citovat kapitolu 1 - zepatat se ai, jak to delat nejlepe
 XML prilohy prehazene poradi
 dopsat co znamena vysledek celkovy
+vice schemta zpracovani
+odstranit prilohy z vypisu kodu
+sepsat vsechny zkratky ze stazeni dat kapitoly
+odstranit chybove hlasky
+projit zdroje, vse zkontrolovat a vynutit soulad s normou
+sjednotit mezery pred citacemi
+projit chybne zalamovani (s durazem na texttt a vynutit zalomeni, aby vypadalo hezky)
 
 
 TODO MOZNA
