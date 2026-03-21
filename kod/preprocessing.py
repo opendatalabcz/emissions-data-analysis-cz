@@ -16,23 +16,6 @@ from utils import *
 from schemas import *
 
 
-def explain_verbosity(verbosity):
-    if verbosity == Verbosity.NORMAL:
-        print('"."\t- provedení operace se souborem\n"-"\t- přeskočení souboru\n n \t- číslo pokusu o provedení operace\n')
-
-
-def skip_file(file, verbosity):
-    if file.exists():
-        if verbosity > Verbosity.NORMAL:
-            print(f'Přeskakuji soubor "{file.stem}", již zpracován.')
-        elif verbosity > Verbosity.QUIET:
-            print('-', end='', flush=True)
-        return True
-    return False
-
-
-#--------------------------------------------------------------------------------------------------------------
-
 # Nalezení datumů, které už byly zpracovány
 def downloaded_dates(directories):
     result = set()
@@ -1121,76 +1104,6 @@ def parse_stations_to_parquet(dataset_dir, stations_subdir, verbosity, delete=Tr
 
 #--------------------------------------------------------------------------------------------------------------
 
-# UDELAT VICEPROCESOVE, AZ BUDE FILTRACE VICE NEZ DIESELU
-def split_measurements(mereni_dir, prohlidky_dir, diesel_dir, verbosity):
-    # Vytvoření množin obsahujících požadované záznamy na základě datasetu prohlídek
-    diesel_ids = []
-    for file in prohlidky_dir.iterdir():
-        df_diesel_personal_ids = (
-            pl.read_parquet(file, schema=prohlidky_schema)
-            .select(['Emise_CisloProtokolu', 'Vozidlo_Druh', 'Emise_ZakladniPalivo', 'Emise_AlternativniPalivo'])
-            .filter(
-                (pl.col('Vozidlo_Druh') == 'OSOBNÍ AUTOMOBIL') &
-                (pl.col('Emise_ZakladniPalivo') == 'Nafta') &
-                (pl.col('Emise_AlternativniPalivo').is_null())
-            )
-            .select(
-                pl.col('Emise_CisloProtokolu')
-                .str.replace(r'^CZ-(0+)(\d+)', r'CZ-${2}')
-                .alias('CisloProtokolu') # Přejměnování, aby jméno odpovídalo datasetu měření
-            )
-        )
-        diesel_ids.append(df_diesel_personal_ids)
-    # Spojení id do jednoho dataframu
-    filter_diesel_personal_df = pl.concat(diesel_ids).unique()
-        
-    # Filtrace v datasetu měření
-    source_files = list(mereni_dir.iterdir())
-    if verbosity > Verbosity.QUIET:
-        print(f'Nalezeno {len(source_files)} souborů obsahující data o měření. Zahajuji jejich filtrování')
-
-    create_directory(diesel_dir, verbosity)
-
-    for file in source_files:
-        # Přeskočení souboru, pokud už byl zpracován
-        target_file = diesel_dir / file.name
-        if skip_file(target_file, verbosity):
-            continue
-
-        # Sloupce obsahující testování typů OBD
-        obd_zazeh_cols = [name for name in mereni_schema.keys() if 'Obd_Readiness_Zazeh' in name]
-        obd_vznet_cols = [name for name in mereni_schema.keys() if 'Obd_Readiness_Vznet' in name]
-        obd_j1939_cols = [name for name in mereni_schema.keys() if 'Obd_Readiness_J1939' in name]
-
-        # Sloupce, které nesou význam pro naftová vozidla
-        diesel_columns = nafta_schema.keys()
-        # Vytvoření datasetu pro dieselová vozidla
-        (
-            pl.scan_parquet(file, schema=mereni_schema)
-            .with_columns(
-                pl.col('CisloProtokolu').str.replace(r'^CZ-(0+)(\d+)', r'CZ-${2}')
-            )
-            .join(filter_diesel_personal_df.lazy(), on='CisloProtokolu', how='semi')
-            .with_columns([
-                pl.any_horizontal(pl.col(obd_j1939_cols).is_not_null()).cast(pl.String).alias('Obd_Readiness_J1939_Pritomno'),
-                pl.any_horizontal(pl.col(obd_zazeh_cols).is_not_null()).cast(pl.String).alias('Obd_Readiness_Zazeh_Pritomno')
-            ])
-            .select(list(diesel_columns))
-            .collect()
-            .write_parquet(target_file)
-        )
-
-        # Oznámění úspěchu uživateli
-        if verbosity > Verbosity.NORMAL:
-            print(f'Zapisuji vyfiltrované parquet soubory ze: "{file.stem}".')
-        elif verbosity > Verbosity.QUIET:
-            print('.', end='', flush=True)
-
-    # Nová řádka pro vizuélní odlišení konce úkonu
-    if verbosity > Verbosity.QUIET:
-        print('\nFILTROVÁNÍ DONONČENO.\n')
-
-#--------------------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
     # Definice konstant
@@ -1230,7 +1143,6 @@ if __name__ == '__main__':
     download_files(SPARQL_ENDPOINT, MEASUREMENTS_DIR / 'gz', PARENT_DATASET_MEASUREMENTS, START_DATE, END_DATE, downloaded_measurement_dates, NO_DOWNLOAD_THREADS, MAX_DOWNLOAD_ATTEMPTS, verbosity=VERBOSITY)
     extract_files(MEASUREMENTS_DIR / 'gz', MEASUREMENTS_DIR / 'xml', NO_EXTRACT_THREADS, verbosity=VERBOSITY)
     parse_measurements_to_parquet(MEASUREMENTS_DIR, MEASUREMENTS_ALL_SUBDIR, NO_PARSE_PROCESSES, VERBOSITY, False)
-    split_measurements(MEASUREMENTS_DIR / 'parquet' / MEASUREMENTS_ALL_SUBDIR, INSPECTIONS_DIR / 'parquet' / INSPECTIONS_SUBDIR, MEASUREMENTS_DIR / 'parquet' / DIESEL_SUBDIR, VERBOSITY)
     
     # print('—————————————————————————————————Stanice STK a SME:—————————————————————————————————————————————\n')
     # # Seznam stanic prochází denní aktualizací
