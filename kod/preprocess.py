@@ -2,7 +2,6 @@ from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_compl
 import gzip
 import shutil
 from functools import partial
-from statistics import mean
 
 import pandas as pd
 import pyarrow as pa
@@ -490,7 +489,7 @@ def fill_result_list(vyusteni_element_list, result_lists, required_list, categor
 
 
 # Vybere z každého vyústění hodnotu, která je považována za nejhorší
-def select_worst(result_lists, strategy_dict):
+def select_worst(result_lists, strategy_dict, already_parsed):
     result = {}
     for name, result_list in result_lists.items():
         try:
@@ -498,7 +497,7 @@ def select_worst(result_lists, strategy_dict):
                 result[name] = None
                 continue
             if 'Min' in name or 'Max' in name or 'Vysledek' in name:
-                result[name] = next((result for result in result_list if result is not None), None)
+                result[name] = next((val for val in result_list if val is not None), None)
                 continue
             strategy = strategy_dict[name.split('_')[-2]]
             floats = floats_sublist(result_list)
@@ -508,20 +507,25 @@ def select_worst(result_lists, strategy_dict):
                     float_result = max(floats, default=None)
                 case 'min':
                     float_result = min(floats, default=None)
-                case 'mean':
-                    float_result = mean(floats) # Vyvolá výjimku v případě prázdného seznamu
                 case 'max_diff_1':
                     float_result = max(floats, default=None, key=lambda x: abs(x - 1.0))
                 case 'bounds':
-                    name_stem = name.partition("_Hodnota")[0]
                     try:
-                        min_value = float(result[f'{name_stem}_Min_Hodnota'])
-                        max_value = float(result[f'{name_stem}_Max_Hodnota'])
+                        if name.startswith('Nafta'):
+                            # Pro naftu jsou limity v samostatném bloku MereniVznetLimit
+                            param = name.split('_')[-2]
+                            min_value = float(already_parsed[f'Nafta_MereniVznetLimit_{param}_Min_Hodnota'])
+                            max_value = float(already_parsed[f'Nafta_MereniVznetLimit_{param}_Max_Hodnota'])
+                        else:
+                            # Pro benzín/plyn jsou limity součástí aktuálního záznamu
+                            name_stem = name.partition("_Hodnota")[0]
+                            min_value = float(result[f'{name_stem}_Min_Hodnota'])
+                            max_value = float(result[f'{name_stem}_Max_Hodnota'])
+                        
                         optimal_value = (max_value + min_value) / 2
                         float_result = max(floats, default=None, key=lambda x: abs(x - optimal_value))
-                    # Pokud by některá z krajních hodnot chyběla vezmu první záznam o otáčkách
                     except Exception:
-                        float_result = next((float for float in floats if float is not None), None)
+                        float_result = next((f for f in floats if f is not None), None)
             # Cast na string, aby bylo zachováno načtení všech hodnot jako string
             if float_result is not None:
                 result[name] = str(float_result)
@@ -543,8 +547,8 @@ def get_detail_benzin(element, prefix, namespaces):
     categories = {'OtackyVolnobezne': ('otackyVolnobezne', 1), 'OtackyZvysene': ('otackyZvysene', 1)}
     result_lists = initialize_result_list(required_list, categories, prefix)
     fill_result_list(benzin_vyusteni_element_list, result_lists, required_list, categories, prefix, namespaces)
-    strategy_dict = {'CO': 'max', 'CO2': 'min', 'COCOOR': 'max', 'HC': 'max', 'LAMBDA': 'max_diff_1', 'N': 'bounds', 'NOX': 'max', 'O2': 'max', 'TPS': 'max'}
-    result |= select_worst(result_lists, strategy_dict)
+    strategy_dict = {'CO': 'max', 'CO2': 'min', 'COCOOR': 'max', 'HC': 'max', 'LAMBDA': 'max_diff_1', 'N': 'bounds', 'NOX': 'max', 'O2': 'max', 'TPS': 'min'}
+    result |= select_worst(result_lists, strategy_dict, result)
     return result
 
 
@@ -575,8 +579,8 @@ def get_detail_nafta(element, prefix, namespaces):
     categories = {'MereniPrumer': ('mereniPrumer', 1), 'Mereni': ('mereni', 4)}
     result_lists = initialize_result_list(required_list, categories, prefix)
     fill_result_list(nafta_vyusteni_element_list, result_lists, required_list, categories, prefix, namespaces)
-    strategy_dict = {'TPS': 'mean', 'CasAkcelerace': 'max', 'Kourivost': 'max', 'OtackyPrebehove': 'mean', 'OtackyVolnobezne': 'mean', 'Teplota': 'min'}
-    result |= select_worst(result_lists, strategy_dict)
+    strategy_dict = {'TPS': 'min', 'CasAkcelerace': 'max', 'Kourivost': 'max', 'OtackyPrebehove': 'bounds', 'OtackyVolnobezne': 'bounds', 'Teplota': 'min'}
+    result |= select_worst(result_lists, strategy_dict, result)
     return result
     
 
@@ -980,6 +984,13 @@ def parse_stations_file(target_dir, xml_file, verbosity, delete):
 def run_preprocessing():
     explain_verbosity(config.VERBOSITY)
 
+    print('—————————————————————————————————Stanice STK a SME:—————————————————————————————————————————————\n')
+    # Seznam stanic prochází denní aktualizací
+    clear_folder(config.STATIONS_DIR, config.VERBOSITY)
+    download_stations(config.SPARQL_ENDPOINT, config.STATIONS_DIR / 'gz', config.DATASET_STATIONS, config.VERBOSITY)
+    extract_files(config.STATIONS_DIR / 'gz', config.STATIONS_DIR / 'xml', 1, config.VERBOSITY)
+    parse_series_to_parquet(config.STATIONS_DIR / 'xml', config.STATIONS_DIR / 'parquet', parse_stations_file, 1, config.VERBOSITY, False)
+
     print('——————————————————————————————————PROHLÍDKY VOZIDEL STK A SME:——————————————————————————————————\n')
     downloaded_inspection_dates = downloaded_dates([config.INSPECTIONS_DIR / 'gz', config.INSPECTIONS_DIR / 'xml', config.INSPECTIONS_DIR / 'parquet'])
     download_files(config.SPARQL_ENDPOINT, config.INSPECTIONS_DIR / 'gz', config.PARENT_DATASET_INSPECTIONS, config.START_DATE, config.END_DATE, downloaded_inspection_dates, config.NO_DOWNLOAD_THREADS, config.MAX_DOWNLOAD_ATTEMPTS, config.VERBOSITY)
@@ -992,12 +1003,6 @@ def run_preprocessing():
     extract_files(config.MEASUREMENTS_DIR / 'gz', config.MEASUREMENTS_DIR / 'xml', config.NO_EXTRACT_THREADS, config.VERBOSITY)
     parse_series_to_parquet(config.MEASUREMENTS_DIR / 'xml', config.MEASUREMENTS_DIR / 'parquet', parse_measurements_file, config.NO_PARSE_PROCESSES, config.VERBOSITY, False)
     
-    print('—————————————————————————————————Stanice STK a SME:—————————————————————————————————————————————\n')
-    # Seznam stanic prochází denní aktualizací
-    clear_folder(config.STATIONS_DIR, config.VERBOSITY)
-    download_stations(config.SPARQL_ENDPOINT, config.STATIONS_DIR / 'gz', config.DATASET_STATIONS, config.VERBOSITY)
-    extract_files(config.STATIONS_DIR / 'gz', config.STATIONS_DIR / 'xml', 1, config.VERBOSITY)
-    parse_series_to_parquet(config.STATIONS_DIR / 'xml', config.STATIONS_DIR / 'parquet', parse_stations_file, 1, config.VERBOSITY, False)
 
 
 if __name__ == '__main__':
