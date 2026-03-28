@@ -35,26 +35,22 @@ def cast_mereni(df):
         pl.col('^.*(RucniZadani|Podporovano|Otestovano)$').replace_strict(bool_map, return_dtype=pl.Boolean),
         pl.col('^.*Hodnota$').str.strip_chars().cast(pl.Float32),
         pl.col('^.*Vysledek$').exclude('Obd_Readiness_Vysledek').cast(pl.Int8),
-        pl.col('^.*Pritomno$').replace_strict(bool_map, return_dtype=pl.Boolean),
+        pl.col('^.*Pritomno$').replace_strict(bool_map, return_dtype=pl.Boolean), #TODO zkontrolovat
         pl.col('^.*PocetVyusteni$').cast(pl.Int8),
     ])
 
 
 # Pravidla pro přetypování sloupců v prohlídkách
 def cast_prohlidka(df):
-    bool_map = {'true': True, '1': True, 'false': False, '0': False}
+    bool_map = {'True': True, 'true': True, '1': True, 'False': False, 'false': False, '0': False}
     return df.with_columns([
         # Jednotlivé sloupce
         pl.col('DatumProhlidky').cast(pl.Date),
-        pl.col('RozsahProhlidky').cast(pl.Enum(['Plný', 'Částečný'])),
         pl.col('Prohlidka_Stanice_Cislo').cast(pl.Int32),
         pl.col('Registrace_DatumPrvni').cast(pl.Datetime),
         pl.col('AdministrativniOprava_DatumProhlidky').cast(pl.Date),
         pl.col('Emise_DatumProhlidky').cast(pl.Datetime),
         pl.col('Emise_StaniceCislo').cast(pl.Int32),
-        pl.col('Emise_EmisniSystem').cast(pl.Enum(['Řízený s OBD', 'Řízený bez OBD', 'Neřízený'])),
-        pl.col('Adr_Platnost_Periodicka').cast(pl.Datetime),
-        pl.col('Adr_Platnost_Meziperiodicka').cast(pl.Datetime),
         pl.col('Vysledek_Odometr').cast(pl.Int32),
         pl.col('Vysledek_DatumPristiProhlidky').str.replace(r'T.*', '').cast(pl.Date),
         pl.col('Vysledek_NalepkaVylepena').replace_strict(bool_map, return_dtype=pl.Boolean),
@@ -64,6 +60,7 @@ def cast_prohlidka(df):
         pl.col('^.*CisloProtokolu$').str.replace(r'^CZ-(0+)(\d+)', r'CZ-${2}'),
         pl.col('^.*OdpovednaOsoba$').cast(pl.Int32),
         pl.col('^.*(Zahajeni|Ukonceni)$').cast(pl.Datetime),
+        pl.col('^.*Pritomno$').replace_strict(bool_map, return_dtype=pl.Boolean),
     ])
 
 

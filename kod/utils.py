@@ -127,53 +127,64 @@ def short_display(df, len=50):
     display(df_short.to_pandas())
 
 
-# Zobrazí počtů jednotlivých sloupců v pandas
-def display_counts(df):
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', UserWarning)
-        height = len(df)
-        counts = df.null_count().to_pandas().T.astype('Int64') * (-1) + height
-        display(counts.astype(str) + f" / {height}")
+# # Zobrazí počtů jednotlivých sloupců v pandas
+# def display_counts(df):
+#     with warnings.catch_warnings():
+#         warnings.simplefilter('ignore', UserWarning)
+#         height = len(df)
+#         counts = df.null_count().to_pandas().T.astype('Int64') * (-1) + height
+#         display(counts.astype(str) + f" / {height}")
 
 
-# Zobrazí základní infromace o datasetu
-def describe(df):
-    short_display(df)
-    display_counts(df)
-    display(df.head(1))
-
-
-# Zobrazí sloupce s datovými typy, jedním příkladem, vyplněností a počtem výskytů majoritní třídy
-def schema_description(df):
-    height = int(len(df))
-
-    def fmt(n) -> str:
-        return f'{int(n):,}'.replace(',', ' ')
-
-    non_null_counts = height - df.null_count().to_pandas().iloc[0]
-
-    rows = []
-    for name, dtype in zip(df.columns, df.dtypes):
-        col = df.get_column(name)
-        non_null = col.drop_nulls()
-
-        sample = non_null[0] if len(non_null) else None
-
-        if len(non_null):
-            majority_count = non_null.value_counts().select(pl.col('count').max()).item()
+# Zobrazí sloupce s datovými typy, ukazkou majoritni tridy, vyplněností a počtem výskytů majoritní třídy
+def schema_description(df: pl.DataFrame):
+    height = len(df)
+    
+    # Agregace pro non-null počty
+    null_counts = df.null_count()
+    
+    # Výpočet majoritních tříd a jejich četností
+    # Využívá group_by pro každý sloupec zvlášť, následně seřazení a výběr prvního prvku
+    majority_data = []
+    for col_name in df.columns:
+        counts = (
+            df.select(col_name)
+            .drop_nulls()
+            .group_by(col_name)
+            .len()
+            .sort("len", descending=True)
+            .limit(1)
+        )
+        
+        if counts.height > 0:
+            val = counts.item(0, 0)
+            cnt = counts.item(0, 1)
         else:
-            majority_count = 0
+            val = None
+            cnt = 0
+        majority_data.append((val, cnt))
 
+    # Příprava finálního listu pro zobrazení
+    rows = []
+    for i, name in enumerate(df.columns):
+        m_val, m_cnt = majority_data[i]
+        non_null_cnt = height - null_counts.item(0, name)
+        
         rows.append({
             'column': name,
-            'sample': sample,
-            'majority': f'{fmt(majority_count)} / {fmt(height)}',
-            'non_null': f'{fmt(non_null_counts[name])} / {fmt(height)}',
-            'dtype': str(dtype),
+            'majority_class': m_val,
+            'majority_cnt': f"{m_cnt:,} / {height:,}".replace(",", " "),
+            'non_null': f"{non_null_cnt:,} / {height:,}".replace(",", " "),
+            'dtype': str(df.dtypes[i]),
         })
 
     display(pd.DataFrame(rows))
 
+# Zobrazí základní infromace o datasetu
+def describe(df):
+    display(df.head(1))
+    short_display(df)
+    schema_description(df)
 
 # Odhad velikosti polars dataframu v paměti
 def size_gb(df):
