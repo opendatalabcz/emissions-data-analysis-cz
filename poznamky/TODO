@@ -184,3 +184,29 @@ nejdrive udelat baseline model
 nedavat informace z budoucnosti - odstranit cas do pristi kontroly
 dat vsechny typy prohlidek a nechat feacuru
 BASELINE MODEL - v praci rict, proc jsem timto zacal - proc jsem tak postupoval
+
+
+SCHUZE:
+na kazdy diagram je potreba se odkazovat
+na githubu uz je web dostupny - https://github.com/opendatalabcz/STK-portal
+vzit stejny model jako v stk slze - a odkazat se
+  - mysleno stejny catboost
+  - odkazat, ze moje uloha bylo expandovat model rosirit data
+dat to textu kolik mam dat - 1411
+  - do captionu obrazku
+  - zobrazovat procenta a sesortovat
+  - logicky grouping dat barevne - barevne sloupce - jinak duplicitni informace
+misto kolacovych grafu pouzit sloupcove
+  - bar plot - lepe se mezi sebou provnava
+  - misto kazdeho kolecka jeden bar
+otocit vsechny grafy vcetne oprav
+interpretaci grafu napsat do popisku textu
+obrazek ma by pochopitelny s latexovym popiskem
+v popisku spise interpretace
+title strucnejsi -> duplikovat do seznamu obrazku
+misto 10 nejvetsich -> nejvetsi
+text nechat cerny - obarvit sloupce
+v popisku dat napriklad, ze zavad c je malo
+kategorie barevne drzet konzistentne mezi grafy
+rozmanitejsi barvy
+podivat se STK webovky
