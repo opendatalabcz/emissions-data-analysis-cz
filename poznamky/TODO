@@ -196,17 +196,17 @@ dat to textu kolik mam dat - 1411
   - do captionu obrazku
   - zobrazovat procenta a sesortovat
   - logicky grouping dat barevne - barevne sloupce - jinak duplicitni informace
-misto kolacovych grafu pouzit sloupcove
-  - bar plot - lepe se mezi sebou provnava
-  - misto kazdeho kolecka jeden bar
-otocit vsechny grafy vcetne oprav
+$misto kolacovych grafu pouzit sloupcove
+$  - bar plot - lepe se mezi sebou provnava
+$  - misto kazdeho kolecka jeden bar
+$otocit vsechny grafy vcetne oprav
 interpretaci grafu napsat do popisku textu
-obrazek ma by pochopitelny s latexovym popiskem
-v popisku spise interpretace
-title strucnejsi -> duplikovat do seznamu obrazku
-misto 10 nejvetsich -> nejvetsi
-text nechat cerny - obarvit sloupce
+$obrazek ma by pochopitelny s latexovym popiskem
+$v popisku spise interpretace
+$title strucnejsi -> duplikovat do seznamu obrazku
+$misto 10 nejvetsich -> nejvetsi
+$text nechat cerny - obarvit sloupce
 v popisku dat napriklad, ze zavad c je malo
 kategorie barevne drzet konzistentne mezi grafy
-rozmanitejsi barvy
+$rozmanitejsi barvy
 podivat se STK webovky
