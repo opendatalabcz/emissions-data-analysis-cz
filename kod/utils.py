@@ -168,13 +168,13 @@ def schema_description(df: pl.DataFrame):
     rows = []
     for i, name in enumerate(df.columns):
         m_val, m_cnt = majority_data[i]
-        non_null_cnt = height - null_counts.item(0, name)
+        null_cnt = null_counts.item(0, name)
         
         rows.append({
             'column': name,
             'majority_class': m_val,
             'majority_cnt': f"{m_cnt:,} / {height:,}".replace(",", " "),
-            'non_null': f"{non_null_cnt:,} / {height:,}".replace(",", " "),
+            'null': f"{null_cnt:,} / {height:,}".replace(",", " "),
             'dtype': str(df.dtypes[i]),
         })
 

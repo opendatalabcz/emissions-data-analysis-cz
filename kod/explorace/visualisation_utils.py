@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import time
 import random
@@ -24,19 +25,36 @@ from ydata_profiling import ProfileReport
 import geopandas as gpd
 
 
-def horizontal_bar(labels, counts, title, save_path = None, decimals=0, height=6, group_indices=[], group_descriptions=None):
+def horizontal_bar(labels, counts, title, save_path = None, decimals=0, height=6, group_indices=[], group_descriptions=None, max_bars=None):
     """Vykreslí horizontální sloupcový graf. """
     # Kopie vstupů pro zabránění mutaci původních seznamů
     labels = list(labels)
     counts = list(counts)
     group_indices = list(group_indices)
 
+    # Aplikace limitu poctu sloupcu
+    if max_bars is not None and len(labels) > max_bars:
+        limit = max_bars - 1
+        
+        # Výpočet sumy pro "Ostatní"
+        other_count = sum(counts[limit:])
+        
+        # Ořezání a přidání agregovaného řádku
+        labels = labels[:limit] + ["Ostatní"]
+        counts = counts[:limit] + [other_count]
+        
+        # Úprava indexů skupin, pokud se používají
+        if group_indices:
+            # Přiřazení nové unikátní barvy pro "Ostatní"
+            other_group_idx = max(group_indices) + 1
+            group_indices = group_indices[:limit] + [other_group_idx]
+            
+            # Přidání popisu pro legendu
+            if group_descriptions is not None:
+                group_descriptions[other_group_idx] = "Ostatní"
+
     # Definice palety
-    palette = [
-        '#1e88e5', '#43a047', "#fdd835", '#e53935', 
-        '#8e24aa', '#3949ab', "#706A4C", '#fb8c00',
-        "#c950a4"
-    ]
+    palette = ['#1e88e5', '#43a047', "#fdd835", '#e53935', '#8e24aa', '#3949ab', "#706A4C", '#fb8c00', "#c950a4"]
 
     # Mapování barev a příprava legendy před otočením dat
     bar_colors = []
@@ -82,39 +100,14 @@ def horizontal_bar(labels, counts, title, save_path = None, decimals=0, height=6
     max_val = max(counts) if counts else 1
     for bar in bars:
         width = bar.get_width()
-        ax.text(
-            width + (max_val * 0.01), 
-            bar.get_y() + bar.get_height()/2, 
-            f'{int(width)}' if decimals == 0 else f'{width:.{decimals}f}', 
-            va='center', 
-            fontsize=11, 
-            color='#333333'
-        )
+        ax.text(width + (max_val * 0.01), bar.get_y() + bar.get_height()/2, f'{int(width)}' if decimals == 0 else f'{width:.{decimals}f}', va='center', fontsize=11, color='#333333')
 
     # Legenda
     if legend_handles:
-        fig.legend(
-            handles=legend_handles,
-            loc='lower center',
-            bbox_to_anchor=(0.5, 0.02),
-            ncol=len(legend_handles),
-            frameon=False,
-            fontsize=11,
-            columnspacing=1.5,
-            handletextpad=0.5
-        )
+        fig.legend(handles=legend_handles, loc='lower center', bbox_to_anchor=(0.5, 0.02), ncol=len(legend_handles), frameon=False, fontsize=11, columnspacing=1.5, handletextpad=0.5)
 
     # Formátování
-    fig.suptitle(
-        title, 
-        fontsize=16, 
-        x=0.5, 
-        y=0.98, 
-        color='black', 
-        fontweight='normal', 
-        ha='center', 
-        va='top'
-    )
+    fig.suptitle(title, fontsize=16, x=0.5, y=0.98, color='black', fontweight='normal', ha='center', va='top')
     
     ax.tick_params(axis='both', which='both', length=0, labelsize=11, labelcolor='#333333')
 
@@ -135,10 +128,11 @@ def plot_stacked_ratios(df, cols, title, save_path = None):
     false_ratios = []
     
     # Výpočet poměrů
-    for col in cols:
+    cols_copy = cols[::-1]
+    for col in cols_copy:
         total = df.height
         # Ošetření různých typů (Boolean vs String 'True')
-        t_count = df.select((pl.col(col).cast(pl.String) == 'True').sum()).item()
+        t_count = df.select((pl.col(col).cast(pl.String).str.to_lowercase() == 'true').sum()).item()
         
         t_ratio = t_count / total
         f_ratio = 1 - t_ratio
@@ -147,7 +141,7 @@ def plot_stacked_ratios(df, cols, title, save_path = None):
         false_ratios.append(f_ratio)
 
     # Inicializace obrázku
-    fig, ax = plt.subplots(figsize=(12, len(cols) * 0.8 + 2), facecolor='white')
+    fig, ax = plt.subplots(figsize=(12, len(cols_copy) * 0.8 + 2), facecolor='white')
     ax.set_facecolor('white')
 
     # Barvy korespondující s paletou (modrá pro True, šedá pro False)
@@ -155,8 +149,8 @@ def plot_stacked_ratios(df, cols, title, save_path = None):
     color_false = '#e0e0e0'
 
     # Vykreslení skládaných sloupců
-    bars_t = ax.barh(cols, true_ratios, color=color_true, height=0.6)
-    bars_f = ax.barh(cols, false_ratios, left=true_ratios, color=color_false, height=0.6)
+    bars_t = ax.barh(cols_copy, true_ratios, color=color_true, height=0.6)
+    bars_f = ax.barh(cols_copy, false_ratios, left=true_ratios, color=color_false, height=0.6)
 
     # Přidání textových popisků (pomer 0.xx) přímo do sloupců
     for i, (t_rect, f_rect) in enumerate(zip(bars_t, bars_f)):
@@ -261,38 +255,7 @@ def plot_czech_regional_map(counts_pl, value_column, title, legend_label, output
     plt.savefig(output_path, format="svg", bbox_inches='tight') # Export do SVG s oříznutím okrajů
 
 
-def time_series(values, title, granularity, save_path = None):
-    # Agregace dat pomocí Polars API
-    # values musí být Series typu Datetime nebo Date
-    df_counts = (
-        values.to_frame("ts")
-        .sort("ts")
-        .group_by_dynamic("ts", every=granularity)
-        .count()
-    )
-
-    # Objektové API Matplotlibu
-    fig, ax = plt.subplots(figsize=(10, 5))
-    
-    ax.plot(
-        df_counts["ts"], 
-        df_counts["count"]
-    )
-
-    ax.set_title(title)
-    ax.set_xlabel("Čas")
-    ax.set_ylabel("Frekvence")
-    ax.grid(True, linestyle="--", alpha=0.6)
-
-    fig.autofmt_xdate()
-
-    if save_path:
-        fig.savefig(save_path, format="svg", bbox_inches="tight")
-    
-    plt.show()
-
-
-def time_series_all(values, title, y_title, granularity, save_path = None):
+def time_series_all(values, title, y_title, granularity, save_path = None, relative=False):
     # Agregace dat pomocí Polars API
     # values musí být Series typu Datetime nebo Date
     df_counts = (
@@ -302,6 +265,8 @@ def time_series_all(values, title, y_title, granularity, save_path = None):
         .agg(pl.len().alias("count"))
         .head(-1)
     )
+    if relative:
+        df_counts = df_counts.with_columns((pl.col("count") / pl.col("count").sum()).alias("count"))
 
     fig, ax = plt.subplots(figsize=(12, 6))
     
@@ -312,13 +277,14 @@ def time_series_all(values, title, y_title, granularity, save_path = None):
     )
 
     ax.set_title(title)
-    ax.set_xlabel("Čas")
+    ax.set_xlabel("Rok")
     ax.set_ylabel(y_title)
     ax.grid(True, linestyle="--", alpha=0.6)
     ax.set_ylim(bottom=0.0, top=df_counts['count'].max()*1.1)
-    ax.get_yaxis().set_major_formatter(
-        mtick.FuncFormatter(lambda x, p: format(int(x), ','))
-    )
+    if relative:
+        ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
+    else:
+        ax.yaxis.set_major_formatter(mtick.FuncFormatter(lambda x, p: format(int(x), ',')))
     
     fig.autofmt_xdate()
 
@@ -328,7 +294,7 @@ def time_series_all(values, title, y_title, granularity, save_path = None):
     plt.show()
 
 
-def time_series_year(values, title, y_title, save_path=None):
+def time_series_year(values, title, y_title, save_path=None, relative=False):
     # Převod na DataFrame a extrakce roku a měsíce
     df = values.to_frame("ts")
     
@@ -350,6 +316,10 @@ def time_series_year(values, title, y_title, save_path=None):
         .join(complete_years, on="year", how="inner")
         .group_by(["year", "month"])
         .agg(pl.len().alias("count"))
+        # Tato sekce zajistí relativní přepočet před finálním průměrem
+        .with_columns(
+            (pl.col("count") / pl.col("count").sum().over("year")) if relative else pl.col("count")
+        )
         .group_by("month")
         .agg(pl.col("count").mean().alias("avg_count"))
         .sort("month")
@@ -369,11 +339,206 @@ def time_series_year(values, title, y_title, save_path=None):
     ax.set_xticks(range(1, 13))
     ax.grid(True, linestyle="--", alpha=0.6)
     ax.set_ylim(bottom=0.0, top=df_monthly_avg["avg_count"].max()*1.1)
+    if relative:
+        ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
+    else:
+        ax.yaxis.set_major_formatter(mtick.FuncFormatter(lambda x, p: format(int(x), ',')))
+
+    if save_path:
+        fig.savefig(save_path, format="svg", bbox_inches="tight")
+ 
+    plt.show()
+
+def active_prohlidky_day_plot(df, start_col, end_col, title, y_title, interval="5m", save_path=None):
+    """
+    Vypočítá a vykreslí průměrný počet aktivních prohlídek v průběhu dne.
+    interval: Rozlišení grafu (např. '1m', '5m', '15m').
+    """
+    # 1. Vytvoření událostí: začátek (+1), konec (-1)
+    starts = df.select([
+        pl.col(start_col).alias("ts"),
+        pl.lit(1, dtype=pl.Int32).alias("change")
+    ]).filter(pl.col("ts").is_not_null())
+    
+    ends = df.select([
+        pl.col(end_col).alias("ts"),
+        pl.lit(-1, dtype=pl.Int32).alias("change")
+    ]).filter(pl.col("ts").is_not_null())
+
+    # 2. Seřazení událostí a výpočet okamžitého počtu aktivních prohlídek
+    events = (
+        pl.concat([starts, ends])
+        .sort("ts")
+        .with_columns(
+            pl.col("change").cum_sum().alias("active_count")
+        )
+    )
+
+    # 3. Převod na pravidelnou časovou řadu (resampling)
+    # Tím získáme stav systému v pravidelných bodech
+    resampled = (
+        events.group_by_dynamic("ts", every=interval)
+        .agg(pl.col("active_count").last())
+        .fill_null(strategy="forward")
+        .fill_null(0)
+    )
+
+    # 4. Odstranění posledního dne pro zamezení zkreslení průměru
+    last_day = resampled.select(pl.col("ts").dt.date().max()).item()
+    
+    # 5. Výpočet průměru pro každou část dne
+    df_avg = (
+        resampled
+        .filter(pl.col("ts").dt.date() < last_day)
+        .with_columns([
+            pl.col("ts").dt.truncate(interval).dt.time().alias("time_of_day")
+        ])
+        .group_by("time_of_day")
+        .agg(pl.col("active_count").mean().alias("avg_active"))
+        .sort("time_of_day")
+    )
+
+    # 6. Vizualizace
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    # Převedení Time objektů na numerickou osu pro Matplotlib
+    x_values = [t.hour + t.minute/60 + t.second/3600 for t in df_avg["time_of_day"]]
+    
+    ax.plot(
+        x_values, 
+        df_avg["avg_active"],
+        linestyle='-',
+        linewidth=2
+    )
+
+    ax.set_title(title)
+    ax.set_xlabel("Čas ve dni")
+    ax.set_ylabel(y_title)
+    ax.set_xticks(range(0, 25))
+    ax.set_xlim(0, 24)
+    ax.grid(True, linestyle="--", alpha=0.6)
+    
+    ax.set_ylim(bottom=0.0, top=df_avg["avg_active"].max() * 1.1)
+    
     ax.get_yaxis().set_major_formatter(
         mtick.FuncFormatter(lambda x, p: format(int(x), ','))
     )
 
     if save_path:
         fig.savefig(save_path, format="svg", bbox_inches="tight")
- 
+
+    plt.tight_layout()
+    plt.show()
+
+def duration_prohlidky_plot(df, start_col, end_col, title, y_title, save_path=None):
+    # 1. Výpočet délky trvání v minutách
+    # 2. Odstranění posledního dne
+    
+    df_duration = (
+        df.select([
+            pl.col(start_col).alias("ts"),
+            ((pl.col(end_col) - pl.col(start_col)).dt.total_seconds() / 60).alias("duration_min")
+        ])
+    )
+    
+    last_day = df_duration.select(pl.col("ts").dt.date().max()).item()
+
+    df_avg_duration = (
+        df_duration
+        .filter(pl.col("ts").dt.date() < last_day)
+        .with_columns(pl.col("ts").dt.hour().alias("hour"))
+        .group_by("hour")
+        .agg(pl.col("duration_min").mean().alias("avg_duration"))
+        .sort("hour")
+    )
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    ax.plot(
+        df_avg_duration["hour"], 
+        df_avg_duration["avg_duration"],
+        marker='o',
+    )
+
+    ax.set_title(title)
+    ax.set_xlabel("Hodina zahájení prohlídky")
+    ax.set_ylabel(f"{y_title} [minuty]")
+    ax.set_xticks(range(0, 24))
+    ax.grid(True, linestyle="--", alpha=0.6)
+    
+    if not df_avg_duration.is_empty():
+        ax.set_ylim(bottom=0.0, top=df_avg_duration["avg_duration"].max() * 1.2)
+
+    if save_path:
+        fig.savefig(save_path, format="svg", bbox_inches="tight")
+
+    plt.tight_layout()
+    plt.show()
+
+def duration_density_plot(df, start_col, end_col, title, x_label, unit='minutes', log_scale=False, save_path=None):
+    """Podporované jednotky: 'seconds', 'minutes', 'hours', 'days', 'years'"""
+    configs = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'years': 86400 * 365.24}
+    divisor = configs.get(unit, 60)
+
+    # Výpočet délky
+    df_duration = (
+        df.select(
+            ((pl.col(end_col) - pl.col(start_col)).dt.total_seconds() / divisor).alias("duration")
+        )
+        .filter(pl.col("duration") > 0)
+    )
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    durations = df_duration["duration"]
+
+    if log_scale:
+        bins = np.logspace(np.log10(durations.min()), np.log10(durations.max()), 100)
+        ax.set_xscale('log')
+    else:
+        bins = 100
+
+    ax.set_xlabel(x_label)
+
+    ax.hist(durations, bins=bins, density=True, color='#1e88e5', edgecolor='white', linewidth=0.5)
+
+    ax.set_title(title)
+    ax.set_ylabel("Hustota pravděpodobnosti")
+    ax.grid(True, linestyle="--", alpha=0.4, which="both")
+
+    if save_path:
+        fig.savefig(save_path, format="svg", bbox_inches="tight")
+
+    plt.tight_layout()
+    plt.show()
+
+def distribution_density_plot(df, value_col, title, x_label, log_scale=False, save_path=None):
+    """Generuje histogram s hustotou pravděpodobnosti pro numerický sloupec."""
+    # Filtrace neplatných hodnot (pro logaritmické měřítko musí být hodnoty kladné)
+    if log_scale:
+        df_filtered = df.select(pl.col(value_col)).filter(pl.col(value_col) > 0)
+    else:
+        df_filtered = df.select(pl.col(value_col)).filter(pl.col(value_col).is_not_null())
+
+    values = df_filtered[value_col]
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    if log_scale:
+        bins = np.logspace(np.log10(values.min()), np.log10(values.max()), 100)
+        ax.set_xscale('log')
+    else:
+        bins = 100
+
+    ax.hist(values, bins=bins, density=True, color='#1e88e5', edgecolor='white', linewidth=0.5)
+
+    ax.set_title(title)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Hustota pravděpodobnosti")
+    ax.grid(True, linestyle="--", alpha=0.4, which="both")
+
+    if save_path:
+        fig.savefig(save_path, format="svg", bbox_inches="tight")
+
+    plt.tight_layout()
     plt.show()
