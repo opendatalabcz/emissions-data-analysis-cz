@@ -78,26 +78,28 @@ def cast_stanice(df):
 
 
 # Odstranění duplicitních ID - Čísel protokolu pro různýmy názvy
-def remove_duplicate_cislo_protokolu(df, prefix=None):
+def remove_duplicate_cislo_protokolu(df):
     print(f'Délka datasetu před odstraněním duplicitních řádků: {df.height}')
 
     df = df.unique()
     print(f'Délka datasetu po odstranění duplicitních řádků: {df.height}')
 
     # Nalezení řádků, které nejsou duplicitní, ale mají shodná id 
-    prefix_dash = f'{prefix}_' if prefix is not None else ''
-    id = f'{prefix_dash}CisloProtokolu'
+    id = f'CisloProtokolu'
     df_duplicit_id = df.filter(pl.col(id).count().over(id) > 1)
     print(f'Neduplicitní řádky se shodným {id}:')
     short_display(df_duplicit_id)
-    # Odstranění nalezených řádků v případě, že panuje neshoda mezi id a číslem stanice
-    df = df.filter(
-        (~pl.col(id).is_in(set(df_duplicit_id[id]))) |
-        (pl.col(id).str.split('-').list.get(1).cast(pl.Int32) == pl.col(f'{prefix_dash}StaniceCislo'))
+
+    # Ponechání pouze prvního z id, pokud nějaká duplicitní stále existují. Prioritou jsou mereni, kde se shoduje stanice
+    df = df.with_columns(
+        is_match = pl.col(id).str.split('-').list.get(1).cast(pl.Int32) == pl.col("StaniceCislo")
     )
-    # Ponechání pouze prvního z id, pokud nějaká duplicitní stále existují
-    df = df.unique(subset=id)
-    print(f'Délka datasetu po odstranění duplicitních {id}: {df.height}')
+    df = (
+        df.sort(by=[id, "is_match"], descending=[False, True])
+          .unique(subset=[id], keep='first', maintain_order=True)
+          .drop("is_match")
+    )
+    print(f'Délka datasetu po odstranění duplicitních {id} s prihlednutim k priorite shodnych stanic: {df.height}')
 
     return df
 

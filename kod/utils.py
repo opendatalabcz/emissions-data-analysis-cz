@@ -181,10 +181,11 @@ def schema_description(df: pl.DataFrame):
     display(pd.DataFrame(rows))
 
 # Zobrazí základní infromace o datasetu
-def describe(df):
+def describe(df, short=False):
     display(df.head(1))
     short_display(df)
-    schema_description(df)
+    if not short:
+        schema_description(df)
 
 # Odhad velikosti polars dataframu v paměti
 def size_gb(df):

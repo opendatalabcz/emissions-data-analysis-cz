@@ -279,7 +279,7 @@ def time_series_all(values, title, y_title, granularity, save_path = None, relat
     ax.set_title(title)
     ax.set_xlabel("Rok")
     ax.set_ylabel(y_title)
-    ax.grid(True, linestyle="--", alpha=0.6)
+    ax.spines[['top', 'right']].set_visible(False)
     ax.set_ylim(bottom=0.0, top=df_counts['count'].max()*1.1)
     if relative:
         ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
@@ -337,7 +337,7 @@ def time_series_year(values, title, y_title, save_path=None, relative=False):
     ax.set_xlabel("Měsíc")
     ax.set_ylabel(y_title)
     ax.set_xticks(range(1, 13))
-    ax.grid(True, linestyle="--", alpha=0.6)
+    ax.spines[['top', 'right']].set_visible(False)
     ax.set_ylim(bottom=0.0, top=df_monthly_avg["avg_count"].max()*1.1)
     if relative:
         ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
@@ -354,7 +354,7 @@ def active_prohlidky_day_plot(df, start_col, end_col, title, y_title, interval="
     Vypočítá a vykreslí průměrný počet aktivních prohlídek v průběhu dne.
     interval: Rozlišení grafu (např. '1m', '5m', '15m').
     """
-    # 1. Vytvoření událostí: začátek (+1), konec (-1)
+    # Vytvoření událostí: začátek (+1), konec (-1)
     starts = df.select([
         pl.col(start_col).alias("ts"),
         pl.lit(1, dtype=pl.Int32).alias("change")
@@ -365,7 +365,7 @@ def active_prohlidky_day_plot(df, start_col, end_col, title, y_title, interval="
         pl.lit(-1, dtype=pl.Int32).alias("change")
     ]).filter(pl.col("ts").is_not_null())
 
-    # 2. Seřazení událostí a výpočet okamžitého počtu aktivních prohlídek
+    # Seřazení událostí a výpočet okamžitého počtu aktivních prohlídek
     events = (
         pl.concat([starts, ends])
         .sort("ts")
@@ -374,7 +374,7 @@ def active_prohlidky_day_plot(df, start_col, end_col, title, y_title, interval="
         )
     )
 
-    # 3. Převod na pravidelnou časovou řadu (resampling)
+    # Převod na pravidelnou časovou řadu (resampling)
     # Tím získáme stav systému v pravidelných bodech
     resampled = (
         events.group_by_dynamic("ts", every=interval)
@@ -383,10 +383,10 @@ def active_prohlidky_day_plot(df, start_col, end_col, title, y_title, interval="
         .fill_null(0)
     )
 
-    # 4. Odstranění posledního dne pro zamezení zkreslení průměru
+    # Odstranění posledního dne pro zamezení zkreslení průměru
     last_day = resampled.select(pl.col("ts").dt.date().max()).item()
     
-    # 5. Výpočet průměru pro každou část dne
+    # Výpočet průměru pro každou část dne
     df_avg = (
         resampled
         .filter(pl.col("ts").dt.date() < last_day)
@@ -398,26 +398,20 @@ def active_prohlidky_day_plot(df, start_col, end_col, title, y_title, interval="
         .sort("time_of_day")
     )
 
-    # 6. Vizualizace
+    # Vizualizace
     fig, ax = plt.subplots(figsize=(12, 6))
     
     # Převedení Time objektů na numerickou osu pro Matplotlib
     x_values = [t.hour + t.minute/60 + t.second/3600 for t in df_avg["time_of_day"]]
     
-    ax.plot(
-        x_values, 
-        df_avg["avg_active"],
-        linestyle='-',
-        linewidth=2
-    )
+    ax.plot(x_values, df_avg["avg_active"], linestyle='-', linewidth=2)
 
     ax.set_title(title)
-    ax.set_xlabel("Čas ve dni")
+    ax.set_xlabel("Hodina")
     ax.set_ylabel(y_title)
     ax.set_xticks(range(0, 25))
     ax.set_xlim(0, 24)
-    ax.grid(True, linestyle="--", alpha=0.6)
-    
+    ax.spines[['top', 'right']].set_visible(False)
     ax.set_ylim(bottom=0.0, top=df_avg["avg_active"].max() * 1.1)
     
     ax.get_yaxis().set_major_formatter(
@@ -431,9 +425,6 @@ def active_prohlidky_day_plot(df, start_col, end_col, title, y_title, interval="
     plt.show()
 
 def duration_prohlidky_plot(df, start_col, end_col, title, y_title, save_path=None):
-    # 1. Výpočet délky trvání v minutách
-    # 2. Odstranění posledního dne
-    
     df_duration = (
         df.select([
             pl.col(start_col).alias("ts"),
@@ -464,7 +455,7 @@ def duration_prohlidky_plot(df, start_col, end_col, title, y_title, save_path=No
     ax.set_xlabel("Hodina zahájení prohlídky")
     ax.set_ylabel(f"{y_title} [minuty]")
     ax.set_xticks(range(0, 24))
-    ax.grid(True, linestyle="--", alpha=0.6)
+    ax.spines[['top', 'right']].set_visible(False)
     
     if not df_avg_duration.is_empty():
         ax.set_ylim(bottom=0.0, top=df_avg_duration["avg_duration"].max() * 1.2)
@@ -504,7 +495,7 @@ def duration_density_plot(df, start_col, end_col, title, x_label, unit='minutes'
 
     ax.set_title(title)
     ax.set_ylabel("Hustota pravděpodobnosti")
-    ax.grid(True, linestyle="--", alpha=0.4, which="both")
+    ax.spines[['top', 'right']].set_visible(False)
 
     if save_path:
         fig.savefig(save_path, format="svg", bbox_inches="tight")
@@ -535,7 +526,7 @@ def distribution_density_plot(df, value_col, title, x_label, log_scale=False, sa
     ax.set_title(title)
     ax.set_xlabel(x_label)
     ax.set_ylabel("Hustota pravděpodobnosti")
-    ax.grid(True, linestyle="--", alpha=0.4, which="both")
+    ax.spines[['top', 'right']].set_visible(False)
 
     if save_path:
         fig.savefig(save_path, format="svg", bbox_inches="tight")
