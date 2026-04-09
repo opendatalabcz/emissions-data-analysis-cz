@@ -358,6 +358,8 @@ def active_prohlidky_day_plot(df, start_col, end_col, title, y_title, interval="
     Vypočítá a vykreslí průměrný počet aktivních prohlídek v průběhu dne.
     interval: Rozlišení grafu (např. '1m', '5m', '15m').
     """
+    koef = 1 / (1 - df['TechnickaCast_Pritomno'].mean())
+    df = df.filter(pl.col('TechnickaCast_Pritomno') == False)
     # Vytvoření událostí: začátek (+1), konec (-1)
     starts = df.select([
         pl.col(start_col).alias("ts"),
@@ -408,7 +410,7 @@ def active_prohlidky_day_plot(df, start_col, end_col, title, y_title, interval="
     # Převedení Time objektů na numerickou osu pro Matplotlib
     x_values = [t.hour + t.minute/60 + t.second/3600 for t in df_avg["time_of_day"]]
     
-    ax.plot(x_values, df_avg["avg_active"], linestyle='-', linewidth=2)
+    ax.plot(x_values, df_avg["avg_active"] * koef, linestyle='-', linewidth=2)
 
     ax.set_title(title)
     ax.set_xlabel("Hodina")
