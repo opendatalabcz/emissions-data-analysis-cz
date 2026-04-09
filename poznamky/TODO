@@ -20,6 +20,7 @@ promitnout zmeny do schemat atd.
 odstranit TODO ze vsech souboru
 zrobustnit parser - logovani misto error
 - revidovat vsechny try excepty
+finalni vykresleni musi byt robustni k chybejicim hodnotam vsude
 
 
 

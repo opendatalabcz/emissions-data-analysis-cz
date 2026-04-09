@@ -245,10 +245,14 @@ def plot_czech_regional_map(counts_pl, value_column, title, legend_label, output
         # Bílý obrys (halo efekt) pro čitelnost textu přes hranice a tmavé barvy
         text_outline = [path_effects.withStroke(linewidth=2, foreground='white')]
 
+        # Formatovani textu
+        formatted_text = f"{int(row[value_column]):,}".replace(",", " ")
+
         # Vložení textu: int() odstraňuje desetinná místa, path_effects aplikuje obrys
-        ax.annotate(text=str(int(row[value_column])), xy=(centroid.x, centroid.y), xytext=xy_text_offset,
+        ax.annotate(text=formatted_text, xy=(centroid.x, centroid.y), xytext=xy_text_offset,
                     textcoords="offset points", ha='center', va='center', fontsize=10, fontweight='bold',
                     color='black', path_effects=text_outline)
+        # Vložení textu: int() odstraňuje desetinná místa, path_effects aplikuje obrys
 
     ax.set_axis_off() # Odstranění souřadnicového rámce
     ax.set_title(title) # Titulek grafu
