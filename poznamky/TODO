@@ -211,3 +211,11 @@ v popisku dat napriklad, ze zavad c je malo
 kategorie barevne drzet konzistentne mezi grafy
 $rozmanitejsi barvy
 podivat se STK webovky
+
+
+
+OTAZKY:
+metody se moc zameruji na situaci, kdy je tam n sloupcu vykazujicich stejnou informaci. viz obd
+mnoho anomalnich zaznamu cestou zahozeno
+metody selhavaji na nepovinnych priznacich casto mejicich nesmyslne hodnoty
+obhajitelnost filtru pro krajni hodnoty
