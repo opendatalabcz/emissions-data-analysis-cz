@@ -127,15 +127,6 @@ def short_display(df, len=50):
     display(df_short.to_pandas())
 
 
-# # Zobrazí počtů jednotlivých sloupců v pandas
-# def display_counts(df):
-#     with warnings.catch_warnings():
-#         warnings.simplefilter('ignore', UserWarning)
-#         height = len(df)
-#         counts = df.null_count().to_pandas().T.astype('Int64') * (-1) + height
-#         display(counts.astype(str) + f" / {height}")
-
-
 # Zobrazí sloupce s datovými typy, ukazkou majoritni tridy, vyplněností a počtem výskytů majoritní třídy
 def schema_description(df: pl.DataFrame):
     height = len(df)
