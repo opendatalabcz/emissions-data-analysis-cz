@@ -21,6 +21,7 @@ odstranit TODO ze vsech souboru
 zrobustnit parser - logovani misto error
 - revidovat vsechny try excepty
 finalni vykresleni musi byt robustni k chybejicim hodnotam vsude
+prumer neodpovida
 
 
 
@@ -43,6 +44,8 @@ odstranit chybove hlasky
 projit zdroje, vse zkontrolovat a vynutit soulad s normou
 sjednotit mezery pred citacemi
 projit chybne zalamovani (s durazem na texttt a vynutit zalomeni, aby vypadalo hezky)
+dat do zaveru, proc jsem nedelal blackbox analyzu anomalii -> future work
+ - na vse takove poukazat
 
 
 TODO MOZNA
@@ -219,3 +222,10 @@ metody se moc zameruji na situaci, kdy je tam n sloupcu vykazujicich stejnou inf
 mnoho anomalnich zaznamu cestou zahozeno
 metody selhavaji na nepovinnych priznacich casto mejicich nesmyslne hodnoty
 obhajitelnost filtru pro krajni hodnoty
+
+
+SCHUZE:
+priorita model, web
+anomalie v case
+projit komentare v textu
+stejny grid u vseho - svisle i vodorovne
