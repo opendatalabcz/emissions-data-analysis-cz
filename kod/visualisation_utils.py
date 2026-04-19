@@ -292,6 +292,9 @@ def time_series_all(values, title, y_title, granularity, save_path = None, relat
     
     fig.autofmt_xdate()
 
+    ax.yaxis.grid(True, linestyle='--', alpha=0.3, color='gray')
+    ax.set_axisbelow(True)
+
     if save_path:
         fig.savefig(save_path, format="svg", bbox_inches="tight")
  
@@ -347,6 +350,9 @@ def time_series_year(values, title, y_title, save_path=None, relative=False):
         ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
     else:
         ax.yaxis.set_major_formatter(mtick.FuncFormatter(lambda x, p: format(int(x), ',')))
+
+    ax.yaxis.grid(True, linestyle='--', alpha=0.3, color='gray')
+    ax.set_axisbelow(True)
 
     if save_path:
         fig.savefig(save_path, format="svg", bbox_inches="tight")
@@ -424,6 +430,9 @@ def active_prohlidky_day_plot(df, start_col, end_col, title, y_title, interval="
         mtick.FuncFormatter(lambda x, p: format(int(x), ','))
     )
 
+    ax.yaxis.grid(True, linestyle='--', alpha=0.3, color='gray')
+    ax.set_axisbelow(True)
+
     if save_path:
         fig.savefig(save_path, format="svg", bbox_inches="tight")
 
@@ -466,6 +475,9 @@ def duration_prohlidky_plot(df, start_col, end_col, title, y_title, save_path=No
     if not df_avg_duration.is_empty():
         ax.set_ylim(bottom=0.0, top=df_avg_duration["avg_duration"].max() * 1.2)
 
+    ax.yaxis.grid(True, linestyle='--', alpha=0.3, color='gray')
+    ax.set_axisbelow(True)
+
     if save_path:
         fig.savefig(save_path, format="svg", bbox_inches="tight")
 
@@ -502,6 +514,9 @@ def duration_density_plot(df, start_col, end_col, title, x_label, unit='minutes'
     ax.set_title(title)
     ax.set_ylabel("Hustota pravděpodobnosti")
     ax.spines[['top', 'right']].set_visible(False)
+
+    ax.yaxis.grid(True, linestyle='--', alpha=0.3, color='gray')
+    ax.set_axisbelow(True)
 
     if save_path:
         fig.savefig(save_path, format="svg", bbox_inches="tight")
@@ -543,6 +558,9 @@ def distribution_density_plot(df, value_col, title, x_label, no_bins=100, anchor
     ax.set_xlabel(x_label)
     ax.set_ylabel("Hustota pravděpodobnosti")
     ax.spines[['top', 'right']].set_visible(False)
+
+    ax.yaxis.grid(True, linestyle='--', alpha=0.3, color='gray')
+    ax.set_axisbelow(True)
 
     if save_path:
         fig.savefig(save_path, format="svg", bbox_inches="tight")
