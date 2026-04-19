@@ -509,7 +509,7 @@ def duration_density_plot(df, start_col, end_col, title, x_label, unit='minutes'
     plt.tight_layout()
     plt.show()
 
-def distribution_density_plot(df, value_col, title, x_label, log_scale=False, save_path=None):
+def distribution_density_plot(df, value_col, title, x_label, no_bins=100, anchor_range=None, log_scale=False, save_path=None):
     """Generuje histogram s hustotou pravděpodobnosti pro numerický sloupec."""
     # Filtrace neplatných hodnot (pro logaritmické měřítko musí být hodnoty kladné)
     if log_scale:
@@ -521,11 +521,21 @@ def distribution_density_plot(df, value_col, title, x_label, log_scale=False, sa
 
     fig, ax = plt.subplots(figsize=(12, 6))
 
-    if log_scale:
-        bins = np.logspace(np.log10(values.min()), np.log10(values.max()), 100)
+    if anchor_range:
+        # Výpočet šířky binu na základě zadaného intervalu
+        a_start, a_end = anchor_range
+        bin_w = (a_end - a_start) / no_bins
+        
+        # Dynamické rozšíření hranic tak, aby pokryly celá data, 
+        # ale zůstaly zarovnané na anchor_range
+        low_bound = a_start - np.ceil((a_start - values.min()) / bin_w) * bin_w
+        high_bound = a_start + np.ceil((values.max() - a_start) / bin_w) * bin_w
+        bins = np.arange(low_bound, high_bound + bin_w, bin_w)
+    elif log_scale:
+        bins = np.logspace(np.log10(values.min()), np.log10(values.max()), no_bins + 1)
         ax.set_xscale('log')
     else:
-        bins = 100
+        bins = no_bins
 
     ax.hist(values, bins=bins, density=True, color='#1e88e5', edgecolor='white', linewidth=0.5)
 
