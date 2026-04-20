@@ -229,3 +229,27 @@ $priorita model, web
 $anomalie v case
 projit komentare v textu
 $stejny grid u vseho - svisle i vodorovne
+
+
+
+pregenerovat grafy podle poznamek
+
+
+porovnat metriky a vysledky s danielem
+pridat feature importance
+feature engineering -> vylepsit performance
+  - soucast vylepseni modelu
+  - zkusit neco pridat <- na vsech datech trenovat -> potom vypsat feture importance a vybrat
+ladit hyperparametry az nakonec
+pohlidat kategorie a typy
+
+daniel spravuje virtualku - co potrebuji poslat za data na web
+  - napsat, ze delam tuhle bakalarku, co potrebuji
+  - dan.raffl@profinit.eu
+
+
+webovky udelat cele
+dynamicke grafy prekreslujici se - i model
+vizualni reprezentace - insprice diplomkou daniela -> futre work - sjednoceni dvou praci
+
+casove pokryti at je rychle
