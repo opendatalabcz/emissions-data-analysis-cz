@@ -25,7 +25,7 @@ from ydata_profiling import ProfileReport
 import geopandas as gpd
 
 
-def horizontal_bar(labels, counts, title, save_path = None, decimals=0, height=6, group_indices=[], group_descriptions=None, max_bars=None):
+def horizontal_bar(labels, counts, title, save_path = None, decimals=0, height=6, group_indices=[], group_descriptions=None, max_bars=None, x_label='Podíl z celkového počtu'):
     """Vykreslí horizontální sloupcový graf. """
     # Kopie vstupů pro zabránění mutaci původních seznamů
     labels = list(labels)
@@ -95,6 +95,7 @@ def horizontal_bar(labels, counts, title, save_path = None, decimals=0, height=6
     bars = ax.barh(labels, counts, color=bar_colors, height=0.7)
     
     ax.set_ylim(-0.8, len(labels) - 0.2)
+    ax.set_xlabel(x_label)
     
     # Textové popisky hodnot
     max_val = max(counts) if counts else 1
@@ -143,6 +144,7 @@ def plot_stacked_ratios(df, cols, title, save_path = None):
     # Inicializace obrázku
     fig, ax = plt.subplots(figsize=(12, len(cols_copy) * 0.8 + 2), facecolor='white')
     ax.set_facecolor('white')
+    ax.set_xlabel('Podíl z celkového počtu')
 
     # Barvy korespondující s paletou (modrá pro True, šedá pro False)
     color_true = '#1e88e5'
