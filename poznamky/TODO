@@ -22,6 +22,8 @@ zrobustnit parser - logovani misto error
 - revidovat vsechny try excepty
 finalni vykresleni musi byt robustni k chybejicim hodnotam vsude
 prumer neodpovida
+rict, ze model je pro mereni, ktera byla uspesna
+black box analyza anomalii predmetem budouci prace
 
 
 
@@ -214,6 +216,7 @@ v popisku dat napriklad, ze zavad c je malo
 kategorie barevne drzet konzistentne mezi grafy
 $rozmanitejsi barvy
 podivat se STK webovky
+
 
 
 
