@@ -560,6 +560,7 @@ def distribution_density_plot(df, value_col, title, x_label, no_bins=100, anchor
     ax.set_xlabel(x_label)
     ax.set_ylabel("Hustota pravděpodobnosti")
     ax.spines[['top', 'right']].set_visible(False)
+    ax.set_xlim(-0.1, 1.1)
 
     ax.yaxis.grid(True, linestyle='--', alpha=0.3, color='gray')
     ax.set_axisbelow(True)
@@ -568,4 +569,28 @@ def distribution_density_plot(df, value_col, title, x_label, no_bins=100, anchor
         fig.savefig(save_path, format="svg", bbox_inches="tight")
 
     plt.tight_layout()
+    plt.show()
+
+
+def time_series_preaggregated(x, y, title, y_title, save_path=None):
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    ax.plot(x, y, marker=',' if len(x) > 10 else 'o')
+
+    ax.set_title(title)
+    ax.set_xlabel("Rok")
+    ax.set_ylabel(y_title)
+    ax.spines[['top', 'right']].set_visible(False)
+    ax.set_ylim(bottom=0.0, top=y.max() * 1.1)
+    
+    ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.4f'))
+    
+    fig.autofmt_xdate()
+
+    ax.yaxis.grid(True, linestyle='--', alpha=0.3, color='gray')
+    ax.set_axisbelow(True)
+
+    if save_path:
+        fig.savefig(save_path, format="svg", bbox_inches="tight")
+ 
     plt.show()
