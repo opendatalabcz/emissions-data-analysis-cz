@@ -1,0 +1,755 @@
+{
+    "model_info": {
+        "threshold": 0.7506060606060605,
+        "f1_test": 0.15014356959347136,
+        "log_loss_test": 0.5724305143741913
+    },
+    "confusion_matrix": {
+        "values": [
+            [
+                897338,
+                47751
+            ],
+            [
+                19731,
+                5961
+            ]
+        ],
+        "labels": [
+            "Úspěch (0)",
+            "Neúspěch (1)"
+        ]
+    },
+    "feature_importance": [
+        {
+            "feature": "Vozidlo_TypMotoru",
+            "train_importance_val_change": 10.174573866273528,
+            "test_importance_loss_change": 0.013870584467015806
+        },
+        {
+            "feature": "Stari_Vozidla_Let",
+            "train_importance_val_change": 9.739047759738266,
+            "test_importance_loss_change": 0.0011438110159486799
+        },
+        {
+            "feature": "Vysledek_Odometr",
+            "train_importance_val_change": 7.865041315029129,
+            "test_importance_loss_change": 0.005702526927089006
+        },
+        {
+            "feature": "Nafta_MereniPrumer_Kourivost_Hodnota",
+            "train_importance_val_change": 3.2578129235056283,
+            "test_importance_loss_change": 0.00029290539180332935
+        },
+        {
+            "feature": "Prohlidka_Stanice_Obec",
+            "train_importance_val_change": 3.178499409911893,
+            "test_importance_loss_change": 0.001852993196884031
+        },
+        {
+            "feature": "Doba_Trvani_Emisi",
+            "train_importance_val_change": 3.0769831160939596,
+            "test_importance_loss_change": 0.000647812493692186
+        },
+        {
+            "feature": "Vozidlo_Znacka",
+            "train_importance_val_change": 2.877659739480664,
+            "test_importance_loss_change": 0.0011774931447904155
+        },
+        {
+            "feature": "Prohlidka_Stanice_ORP",
+            "train_importance_val_change": 2.648915519525683,
+            "test_importance_loss_change": 0.00043567409342809376
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_COCOOR_Hodnota",
+            "train_importance_val_change": 1.7566258224369065,
+            "test_importance_loss_change": 0.00031231357144292216
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_O2_Hodnota",
+            "train_importance_val_change": 2.254764894949245,
+            "test_importance_loss_change": 0.0005892387935268807
+        },
+        {
+            "feature": "Prohlidka_Stanice_Cislo",
+            "train_importance_val_change": 2.202714300823303,
+            "test_importance_loss_change": 0.0001536197882206752
+        },
+        {
+            "feature": "MericiPristroj_VerzeSoftware",
+            "train_importance_val_change": 2.051033767352248,
+            "test_importance_loss_change": 0.0009806555632189537
+        },
+        {
+            "feature": "Nafta_Mereni0_Kourivost_Hodnota",
+            "train_importance_val_change": 1.627260991688489,
+            "test_importance_loss_change": 0.00024963635802217047
+        },
+        {
+            "feature": "Doba_Trvani_Prohlidky",
+            "train_importance_val_change": 1.9115396895869077,
+            "test_importance_loss_change": 2.0376859571057706e-05
+        },
+        {
+            "feature": "Prohlidka_Cas_zahajeni",
+            "train_importance_val_change": 1.5949322956340108,
+            "test_importance_loss_change": 0.00014986387339234111
+        },
+        {
+            "feature": "Prohlidka_Stanice_Kraj",
+            "train_importance_val_change": 1.6273243834716056,
+            "test_importance_loss_change": 0.00022629321606091934
+        },
+        {
+            "feature": "Nafta_MereniVznetLimit_Kourivost_Max_Hodnota",
+            "train_importance_val_change": 1.432710808720771,
+            "test_importance_loss_change": 0.0009355242332752479
+        },
+        {
+            "feature": "Emise_OdpovednaOsoba",
+            "train_importance_val_change": 1.7057463643714625,
+            "test_importance_loss_change": 9.869691188970446e-05
+        },
+        {
+            "feature": "Prohlidka_OdpovednaOsoba",
+            "train_importance_val_change": 1.4488759875397461,
+            "test_importance_loss_change": 4.1977296751943176e-05
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_N_Hodnota",
+            "train_importance_val_change": 1.2920933159975645,
+            "test_importance_loss_change": 0.00029584435364012393
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_COCOOR_Hodnota",
+            "train_importance_val_change": 0.9253037388191174,
+            "test_importance_loss_change": 0.00019330883694096412
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_CO_Hodnota",
+            "train_importance_val_change": 1.3485908881579944,
+            "test_importance_loss_change": 0.00020962766507658936
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_CO2_Hodnota",
+            "train_importance_val_change": 1.0638228134185868,
+            "test_importance_loss_change": 4.479290124065338e-05
+        },
+        {
+            "feature": "Vysledek_Readiness",
+            "train_importance_val_change": 0.9143803130541382,
+            "test_importance_loss_change": 0.0002790833018748624
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_N_Min_Hodnota",
+            "train_importance_val_change": 1.015383834328393,
+            "test_importance_loss_change": 7.526189399177375e-05
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_O2_Hodnota",
+            "train_importance_val_change": 0.7538355523449742,
+            "test_importance_loss_change": -5.000859067760821e-05
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_CAT-FUNC_Otestovano",
+            "train_importance_val_change": 0.7860482045360178,
+            "test_importance_loss_change": 0.00020932702398396283
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_LAMBDA_Hodnota",
+            "train_importance_val_change": 0.8868297722097929,
+            "test_importance_loss_change": 0.00016081763811581957
+        },
+        {
+            "feature": "Vozidlo_ObchodniOznaceni",
+            "train_importance_val_change": 0.8178653936777607,
+            "test_importance_loss_change": 0.00023505637692340005
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_CO_Hodnota",
+            "train_importance_val_change": 0.8381555934985371,
+            "test_importance_loss_change": 5.585618224657196e-05
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_HC_Hodnota",
+            "train_importance_val_change": 0.7738162436510677,
+            "test_importance_loss_change": 8.694012709411925e-05
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_N_Max_Hodnota",
+            "train_importance_val_change": 0.7139419414419523,
+            "test_importance_loss_change": 0.00012166604959705045
+        },
+        {
+            "feature": "Nafta_MereniVznetLimit_OtackyPrebehove_Max_Hodnota",
+            "train_importance_val_change": 0.6812205372968518,
+            "test_importance_loss_change": 9.422270186040434e-05
+        },
+        {
+            "feature": "Poznamky",
+            "train_importance_val_change": 0.7302560935881276,
+            "test_importance_loss_change": 0.00011903340690898231
+        },
+        {
+            "feature": "Nafta_MereniPrumer_OtackyPrebehove_Hodnota",
+            "train_importance_val_change": 0.60176826270537,
+            "test_importance_loss_change": 0.00010290036826251144
+        },
+        {
+            "feature": "Vozidlo_Provedeni",
+            "train_importance_val_change": 0.7411276375884792,
+            "test_importance_loss_change": 6.075235701118639e-05
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_HC_Hodnota",
+            "train_importance_val_change": 0.5799028371007522,
+            "test_importance_loss_change": 3.402538396370947e-05
+        },
+        {
+            "feature": "Nafta_Mereni0_OtackyVolnobezne_Hodnota",
+            "train_importance_val_change": 0.6063750643297368,
+            "test_importance_loss_change": 9.120534115833836e-05
+        },
+        {
+            "feature": "Nafta_Mereni0_CasAkcelerace_Hodnota",
+            "train_importance_val_change": 0.7052959980896822,
+            "test_importance_loss_change": 3.847947815947921e-05
+        },
+        {
+            "feature": "Nafta_MereniVznetLimit_OtackyPrebehove_Min_Hodnota",
+            "train_importance_val_change": 0.6222922913078979,
+            "test_importance_loss_change": 1.8757368503557764e-05
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_CO2_Hodnota",
+            "train_importance_val_change": 0.5720220765329602,
+            "test_importance_loss_change": 4.180000212336554e-06
+        },
+        {
+            "feature": "MericiPristroj_Verze",
+            "train_importance_val_change": 0.6149840081547897,
+            "test_importance_loss_change": 0.00010066762217228004
+        },
+        {
+            "feature": "MericiPristroj_Typ",
+            "train_importance_val_change": 0.6478493534771216,
+            "test_importance_loss_change": 6.655181962904468e-05
+        },
+        {
+            "feature": "Nafta_MereniPrumer_OtackyVolnobezne_Hodnota",
+            "train_importance_val_change": 0.5116888892473689,
+            "test_importance_loss_change": 1.2255203209001911e-05
+        },
+        {
+            "feature": "Nafta_MereniPrumer_CasAkcelerace_Hodnota",
+            "train_importance_val_change": 0.4497057230203258,
+            "test_importance_loss_change": 2.7865344023880745e-05
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_EGR-VVT_Podporovano",
+            "train_importance_val_change": 0.4460970480506178,
+            "test_importance_loss_change": 0.00012351880651805813
+        },
+        {
+            "feature": "Obd_KomunikacniProtokol",
+            "train_importance_val_change": 0.5493429222113495,
+            "test_importance_loss_change": 0.0001061795809818152
+        },
+        {
+            "feature": "MericiPristroj_Vyrobce",
+            "train_importance_val_change": 0.5163063734659272,
+            "test_importance_loss_change": 9.022977296905079e-05
+        },
+        {
+            "feature": "Obd_VzdalenostDtc",
+            "train_importance_val_change": 0.5292469490391676,
+            "test_importance_loss_change": 2.9199258426208333e-05
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_N_Hodnota",
+            "train_importance_val_change": 0.42485847259489923,
+            "test_importance_loss_change": 3.4873517144595745e-05
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_N_Min_Hodnota",
+            "train_importance_val_change": 0.44845057791413623,
+            "test_importance_loss_change": 0.00012147779715787621
+        },
+        {
+            "feature": "MericiPristroj_OBD",
+            "train_importance_val_change": 0.43095767156896203,
+            "test_importance_loss_change": 5.564243250127203e-05
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_LAMBDA_Hodnota",
+            "train_importance_val_change": 0.4677250577305632,
+            "test_importance_loss_change": 4.040922309283545e-05
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_CO_Max_Hodnota",
+            "train_importance_val_change": 0.3847332251353599,
+            "test_importance_loss_change": 5.0088949931720306e-05
+        },
+        {
+            "feature": "Nafta_MereniPrumer_Teplota_Hodnota",
+            "train_importance_val_change": 0.41850211154507116,
+            "test_importance_loss_change": -2.494608186993837e-05
+        },
+        {
+            "feature": "Nafta_MereniVznetLimit_OtackyVolnobezne_Max_Hodnota",
+            "train_importance_val_change": 0.34815990139773173,
+            "test_importance_loss_change": 9.25157885876271e-05
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_BOOST_Podporovano",
+            "train_importance_val_change": 0.34141069844361377,
+            "test_importance_loss_change": 5.540954235011738e-05
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_EGS_Podporovano",
+            "train_importance_val_change": 0.41607752819237354,
+            "test_importance_loss_change": 8.61477690587864e-05
+        },
+        {
+            "feature": "Nafta_Mereni0_OtackyPrebehove_Hodnota",
+            "train_importance_val_change": 0.34536027187045953,
+            "test_importance_loss_change": 6.617508028949892e-05
+        },
+        {
+            "feature": "Nafta_MereniVznetLimit_OtackyVolnobezne_Min_Hodnota",
+            "train_importance_val_change": 0.3287137636963408,
+            "test_importance_loss_change": 6.409686534975904e-05
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_N_Max_Hodnota",
+            "train_importance_val_change": 0.34293915457287366,
+            "test_importance_loss_change": 4.9713588711280954e-05
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_TPS_Hodnota",
+            "train_importance_val_change": 0.30991377605195525,
+            "test_importance_loss_change": -1.4076457865421406e-05
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_DPF_Podporovano",
+            "train_importance_val_change": 0.3810876516636935,
+            "test_importance_loss_change": 3.559112442705533e-05
+        },
+        {
+            "feature": "Nafta_Mereni0_TPS_Hodnota",
+            "train_importance_val_change": 0.30322396666502627,
+            "test_importance_loss_change": -1.3753621124212856e-05
+        },
+        {
+            "feature": "Nafta_Mereni0_Teplota_Hodnota",
+            "train_importance_val_change": 0.3122508632826377,
+            "test_importance_loss_change": -2.0335351085041625e-05
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_EVAP_Podporovano",
+            "train_importance_val_change": 0.21706967901783206,
+            "test_importance_loss_change": 3.105478118154425e-05
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_AC_Otestovano",
+            "train_importance_val_change": 0.35396229574208327,
+            "test_importance_loss_change": 0.00010629031858745233
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_O2S-FUNC_Otestovano",
+            "train_importance_val_change": 0.2671589244103902,
+            "test_importance_loss_change": 3.955253811667408e-05
+        },
+        {
+            "feature": "Nafta_Mereni1_Kourivost_Hodnota",
+            "train_importance_val_change": 0.27816681623427897,
+            "test_importance_loss_change": -1.75240970309219e-05
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_O2S-HEAT_Otestovano",
+            "train_importance_val_change": 0.2559582202971647,
+            "test_importance_loss_change": 8.159559127114783e-05
+        },
+        {
+            "feature": "Registrace_Stat",
+            "train_importance_val_change": 0.23281534482534555,
+            "test_importance_loss_change": 1.9559837906959105e-05
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_O2S-HEAT_Podporovano",
+            "train_importance_val_change": 0.24560764400839197,
+            "test_importance_loss_change": 6.340017871876435e-05
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_RESERVE_Otestovano",
+            "train_importance_val_change": 0.16032291971240178,
+            "test_importance_loss_change": 1.2615487498820097e-05
+        },
+        {
+            "feature": "Nafta_Mereni1_CasAkcelerace_Hodnota",
+            "train_importance_val_change": 0.23323816706704742,
+            "test_importance_loss_change": -1.0374910883759192e-05
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_TPS_Hodnota",
+            "train_importance_val_change": 0.2600111831993555,
+            "test_importance_loss_change": 8.254489998095934e-06
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_FUEL_Podporovano",
+            "train_importance_val_change": 0.18077971348969823,
+            "test_importance_loss_change": 3.119931764719586e-05
+        },
+        {
+            "feature": "Vozidlo_Druh",
+            "train_importance_val_change": 0.21828857204069377,
+            "test_importance_loss_change": 7.110699357629759e-05
+        },
+        {
+            "feature": "Nafta_Mereni1_OtackyVolnobezne_Hodnota",
+            "train_importance_val_change": 0.18630254431467455,
+            "test_importance_loss_change": -9.14891619095917e-06
+        },
+        {
+            "feature": "Obd_PocetDtc",
+            "train_importance_val_change": 0.17950056289681976,
+            "test_importance_loss_change": 6.287825965647364e-05
+        },
+        {
+            "feature": "AdministrativneOpraveno",
+            "train_importance_val_change": 0.18479453059887124,
+            "test_importance_loss_change": -1.0026861365119063e-05
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_EGR-VVT_Otestovano",
+            "train_importance_val_change": 0.2392785962093428,
+            "test_importance_loss_change": 4.213086737261211e-05
+        },
+        {
+            "feature": "Obd_VypisDtc",
+            "train_importance_val_change": 0.19045515633903345,
+            "test_importance_loss_change": 5.8995370421643933e-05
+        },
+        {
+            "feature": "Nafta_Mereni3_TPS_Hodnota",
+            "train_importance_val_change": 0.13875802053000832,
+            "test_importance_loss_change": 3.682223312492398e-07
+        },
+        {
+            "feature": "Benzin_PocetVyusteni",
+            "train_importance_val_change": 0.1613447643939254,
+            "test_importance_loss_change": 1.161186087697367e-05
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_CO_Max_Hodnota",
+            "train_importance_val_change": 0.16910708284829615,
+            "test_importance_loss_change": 1.2096707035899204e-05
+        },
+        {
+            "feature": "Nafta_Mereni1_OtackyPrebehove_Hodnota",
+            "train_importance_val_change": 0.2101678741316433,
+            "test_importance_loss_change": 2.6252015595473743e-05
+        },
+        {
+            "feature": "Nafta_MereniPrumer_TPS_Hodnota",
+            "train_importance_val_change": 0.12972907045347515,
+            "test_importance_loss_change": 4.9188826040102995e-06
+        },
+        {
+            "feature": "Nafta_Mereni3_Teplota_Vysledek",
+            "train_importance_val_change": 0.11516581950321757,
+            "test_importance_loss_change": -1.245786408066163e-05
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_COMP_Podporovano",
+            "train_importance_val_change": 0.0721049172408015,
+            "test_importance_loss_change": 1.377694238058891e-05
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_LAMBDA_Max_Hodnota",
+            "train_importance_val_change": 0.13573730546098225,
+            "test_importance_loss_change": 1.4602596980495264e-05
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_EGS_Otestovano",
+            "train_importance_val_change": 0.13938193696627607,
+            "test_importance_loss_change": 8.974483621028889e-06
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_LAMBDA_Max_RucniZadani",
+            "train_importance_val_change": 0.13108610307932386,
+            "test_importance_loss_change": 3.822162437169686e-05
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_COMP_Otestovano",
+            "train_importance_val_change": 0.04916340382376489,
+            "test_importance_loss_change": 1.8080487724040726e-06
+        },
+        {
+            "feature": "Nafta_Mereni2_CasAkcelerace_Hodnota",
+            "train_importance_val_change": 0.1524417864754165,
+            "test_importance_loss_change": -9.758491199921929e-06
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_FUEL_Podporovano",
+            "train_importance_val_change": 0.14001818449732836,
+            "test_importance_loss_change": 1.1587858112630894e-05
+        },
+        {
+            "feature": "Zavady",
+            "train_importance_val_change": 0.07702717487054885,
+            "test_importance_loss_change": -3.674940879550004e-06
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_FUEL_Otestovano",
+            "train_importance_val_change": 0.09983778231686437,
+            "test_importance_loss_change": 1.3997484498540217e-05
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_AC_Otestovano",
+            "train_importance_val_change": 0.21273611497282116,
+            "test_importance_loss_change": 1.6911534689667553e-05
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_NOX_Podporovano",
+            "train_importance_val_change": 0.08429446969085674,
+            "test_importance_loss_change": 5.628772894394392e-05
+        },
+        {
+            "feature": "Nafta_Mereni2_OtackyVolnobezne_Hodnota",
+            "train_importance_val_change": 0.10329413021987201,
+            "test_importance_loss_change": -8.701622125850683e-06
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_NMHC_Podporovano",
+            "train_importance_val_change": 0.10917457181631268,
+            "test_importance_loss_change": 2.2409500635038144e-05
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_HCAT_Podporovano",
+            "train_importance_val_change": 0.11294994755544153,
+            "test_importance_loss_change": -1.329420286874661e-05
+        },
+        {
+            "feature": "Nafta_Mereni3_CasAkcelerace_Hodnota",
+            "train_importance_val_change": 0.06575314054347564,
+            "test_importance_loss_change": 2.4816566001062412e-05
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_HC_Max_Hodnota",
+            "train_importance_val_change": 0.07364445273280042,
+            "test_importance_loss_change": -1.0668666134002376e-05
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_EGR-VVT_Otestovano",
+            "train_importance_val_change": 0.08665357376949337,
+            "test_importance_loss_change": 1.3158658756747453e-05
+        },
+        {
+            "feature": "Nafta_MereniVznetLimit_Kourivost_Max_RucniZadani",
+            "train_importance_val_change": 0.07605538908627905,
+            "test_importance_loss_change": 2.303895757006328e-05
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_CAT-FUNC_Podporovano",
+            "train_importance_val_change": 0.10444564846267601,
+            "test_importance_loss_change": 1.3387696236311086e-05
+        },
+        {
+            "feature": "Nafta_Mereni3_OtackyVolnobezne_Hodnota",
+            "train_importance_val_change": 0.07345637805842763,
+            "test_importance_loss_change": 5.833186157581475e-06
+        },
+        {
+            "feature": "Obd_Readiness_Vysledek",
+            "train_importance_val_change": 0.12179063145200282,
+            "test_importance_loss_change": 4.058387238576969e-05
+        },
+        {
+            "feature": "Nafta_MereniVznetLimit_OtackyPrebehove_Min_RucniZadani",
+            "train_importance_val_change": 0.06342025513745067,
+            "test_importance_loss_change": 3.9535164697448076e-05
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_SAS_Podporovano",
+            "train_importance_val_change": 0.09397656470363894,
+            "test_importance_loss_change": 2.0081266608000067e-05
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_LAMBDA_Vysledek",
+            "train_importance_val_change": 0.0911535533117227,
+            "test_importance_loss_change": 8.700267419753382e-06
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_CO_Max_RucniZadani",
+            "train_importance_val_change": 0.08540308147519403,
+            "test_importance_loss_change": 5.62544941310657e-06
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_MISF_Podporovano",
+            "train_importance_val_change": 0.05817331696088507,
+            "test_importance_loss_change": 1.2338677141639684e-05
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_EGR-VVT_Podporovano",
+            "train_importance_val_change": 0.06205658443501941,
+            "test_importance_loss_change": 1.2284935268632353e-05
+        },
+        {
+            "feature": "Nafta_Mereni3_Kourivost_Hodnota",
+            "train_importance_val_change": 0.08363358655516108,
+            "test_importance_loss_change": -6.911595555880723e-06
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_COMP_Otestovano",
+            "train_importance_val_change": 0.06655725410655139,
+            "test_importance_loss_change": 6.257060941372572e-06
+        },
+        {
+            "feature": "Nafta_MereniVznetLimit_OtackyPrebehove_Max_RucniZadani",
+            "train_importance_val_change": 0.08118522449067075,
+            "test_importance_loss_change": 1.6548990408205013e-06
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_HC_Max_RucniZadani",
+            "train_importance_val_change": 0.07742464508519477,
+            "test_importance_loss_change": 3.140044472892056e-05
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_HC_Max_Hodnota",
+            "train_importance_val_change": 0.07685327964260684,
+            "test_importance_loss_change": -6.091669706775882e-06
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_HC_Vysledek",
+            "train_importance_val_change": 0.07259077728426662,
+            "test_importance_loss_change": -7.953733981436173e-07
+        },
+        {
+            "feature": "Nafta_Mereni1_Teplota_Hodnota",
+            "train_importance_val_change": 0.055757797455209465,
+            "test_importance_loss_change": -1.3182812880235817e-05
+        },
+        {
+            "feature": "Nafta_Mereni3_OtackyPrebehove_Hodnota",
+            "train_importance_val_change": 0.044438747352031745,
+            "test_importance_loss_change": -6.518886101591903e-06
+        },
+        {
+            "feature": "Nafta_Mereni2_OtackyPrebehove_Hodnota",
+            "train_importance_val_change": 0.0478347087590651,
+            "test_importance_loss_change": -6.491419803023035e-06
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_LAMBDA_Max_Hodnota",
+            "train_importance_val_change": 0.033601943111970005,
+            "test_importance_loss_change": -1.3474335649465985e-06
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_N_Max_RucniZadani",
+            "train_importance_val_change": 0.06432140201347214,
+            "test_importance_loss_change": 5.414392142392535e-07
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_NOX_Hodnota",
+            "train_importance_val_change": 0.051879907776261495,
+            "test_importance_loss_change": 1.4143594043974916e-05
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_HC_Vysledek",
+            "train_importance_val_change": 0.07413677491796196,
+            "test_importance_loss_change": -3.14602272073472e-06
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_LAMBDA_Min_Hodnota",
+            "train_importance_val_change": 0.04290652784353471,
+            "test_importance_loss_change": 2.895019774388589e-06
+        },
+        {
+            "feature": "Nafta_MereniVznetLimit_KourivostRozpeti_Max_Hodnota",
+            "train_importance_val_change": 0.0661199828617917,
+            "test_importance_loss_change": 4.188898367970169e-06
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_SAS_Otestovano",
+            "train_importance_val_change": 0.04184860614572163,
+            "test_importance_loss_change": 7.939046573205804e-06
+        },
+        {
+            "feature": "Nafta_Mereni2_Teplota_Hodnota",
+            "train_importance_val_change": 0.06041436819383818,
+            "test_importance_loss_change": -4.988681811822031e-06
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_HC_Max_RucniZadani",
+            "train_importance_val_change": 0.06490992865481954,
+            "test_importance_loss_change": 3.606779945347466e-05
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_CO_Max_RucniZadani",
+            "train_importance_val_change": 0.10297545162926386,
+            "test_importance_loss_change": -9.456263130462158e-07
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_RESERVE_Podporovano",
+            "train_importance_val_change": 0.04205556740276158,
+            "test_importance_loss_change": 5.177496725157955e-06
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_BOOST_Otestovano",
+            "train_importance_val_change": 0.040362503079576596,
+            "test_importance_loss_change": 1.1601752123369114e-05
+        },
+        {
+            "feature": "Benzin_OtackyVolnobezne_TPS_Vysledek",
+            "train_importance_val_change": 0.02993547004768813,
+            "test_importance_loss_change": 1.3038299679912768e-06
+        },
+        {
+            "feature": "Nafta_Mereni2_Kourivost_Hodnota",
+            "train_importance_val_change": 0.05281977498157731,
+            "test_importance_loss_change": -5.540460325988613e-07
+        },
+        {
+            "feature": "Obd_Readiness_Vznet_DPF_Otestovano",
+            "train_importance_val_change": 0.0405123358995935,
+            "test_importance_loss_change": 6.986058151771854e-06
+        },
+        {
+            "feature": "Benzin_OtackyZvysene_LAMBDA_Max_RucniZadani",
+            "train_importance_val_change": 0.11255390339713503,
+            "test_importance_loss_change": 1.6522194975335646e-05
+        },
+        {
+            "feature": "Vysledek_RidiciJednotkaStav",
+            "train_importance_val_change": 0.04074152945521399,
+            "test_importance_loss_change": -4.308808398745256e-06
+        },
+        {
+            "feature": "Nafta_Mereni3_Teplota_Hodnota",
+            "train_importance_val_change": 0.07426244507004995,
+            "test_importance_loss_change": -3.414009357305403e-06
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_MISF_Otestovano",
+            "train_importance_val_change": 0.07700201683713137,
+            "test_importance_loss_change": -2.3107312760506374e-06
+        },
+        {
+            "feature": "Nafta_Mereni1_TPS_Hodnota",
+            "train_importance_val_change": 0.04051770374184769,
+            "test_importance_loss_change": -3.487491552212063e-06
+        },
+        {
+            "feature": "Obd_Readiness_Zazeh_MISF_Podporovano",
+            "train_importance_val_change": 0.05533027995641755,
+            "test_importance_loss_change": 3.7180687289621135e-06
+        },
+        {
+            "feature": "Obd_KontrolaMil",
+            "train_importance_val_change": 0.029324336069987637,
+            "test_importance_loss_change": -1.525361068677178e-06
+        }
+    ]
+}
