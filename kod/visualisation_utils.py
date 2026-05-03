@@ -23,6 +23,7 @@ import matplotlib.ticker as mtick
 import matplotlib.patheffects as path_effects
 from ydata_profiling import ProfileReport
 import geopandas as gpd
+import calendar
 
 
 def horizontal_bar(labels, counts, title, save_path = None, decimals=0, height=6, group_indices=[], group_descriptions=None, max_bars=None, x_label='Podíl z celkového počtu'):
@@ -593,4 +594,90 @@ def time_series_preaggregated(x, y, title, y_title, save_path=None):
     if save_path:
         fig.savefig(save_path, format="svg", bbox_inches="tight")
  
+    plt.show()
+
+def time_series_monthly_expr(df, time_col, exprs, title, y_title, save_path=None, decimals=3):
+    df_work = df.filter(pl.col(time_col).is_not_null())
+    if df_work.is_empty():
+        return
+
+    is_pre_aggregated = False
+    if exprs is None:
+        is_pre_aggregated = True
+    elif isinstance(exprs, list) and len(exprs) == 0:
+        is_pre_aggregated = True
+
+    if is_pre_aggregated:
+        # Režim pro již hotová (pre-agregovaná) data
+        if time_col != "_ts_month":
+            df_agg = df_work.rename({time_col: "_ts_month"}).sort("_ts_month")
+        else:
+            df_agg = df_work.sort("_ts_month")
+    else:
+        # Režim pro výpočet z Polars expressions
+        if not isinstance(exprs, list):
+            exprs = [exprs]
+
+        min_date = df_work.select(pl.col(time_col).min()).item()
+        max_date = df_work.select(pl.col(time_col).max()).item()
+
+        min_is_full = min_date.day == 1
+        max_is_full = max_date.day == calendar.monthrange(max_date.year, max_date.month)[1]
+
+        df_work = df_work.with_columns(pl.col(time_col).dt.truncate("1mo").alias("_ts_month"))
+
+        min_month = df_work.select(pl.col("_ts_month").min()).item()
+        max_month = df_work.select(pl.col("_ts_month").max()).item()
+
+        valid_filter = pl.lit(True)
+        if not min_is_full:
+            valid_filter = valid_filter & (pl.col("_ts_month") > min_month)
+        if not max_is_full:
+            valid_filter = valid_filter & (pl.col("_ts_month") < max_month)
+
+        df_agg = (
+            df_work.filter(valid_filter)
+            .group_by("_ts_month")
+            .agg(exprs)
+            .sort("_ts_month")
+        )
+
+    palette = ['#1e88e5', '#43a047', '#e53935', '#8e24aa',"#fdd835", '#3949ab', "#706A4C", '#fb8c00', "#c950a4"]
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    x = df_agg["_ts_month"]
+    y_cols = [c for c in df_agg.columns if c != "_ts_month"]
+
+    for i, col in enumerate(y_cols):
+        color = palette[i % len(palette)]
+        ax.plot(
+            x,
+            df_agg[col],
+            marker=',' if len(df_agg) > 10 else 'o',
+            color=color,
+            label=col
+        )
+
+    ax.set_title(title)
+    ax.set_xlabel("Rok")
+    ax.set_ylabel(y_title)
+    ax.spines[['top', 'right']].set_visible(False)
+
+    if not df_agg.is_empty():
+        max_val = max([df_agg[c].max() for c in y_cols if df_agg[c].max() is not None] + [0])
+        ax.set_ylim(bottom=0.0, top=max_val * 1.1)
+
+    fig.autofmt_xdate()
+
+    ax.yaxis.grid(True, linestyle='--', alpha=0.3, color='gray')
+    ax.set_axisbelow(True)
+    ax.yaxis.set_major_formatter(mtick.FuncFormatter(lambda val, p: f'{val:.{decimals}f}'))
+
+    if len(y_cols) > 1:
+        ax.legend(frameon=False, loc='lower center', bbox_to_anchor=(0.5, -0.25), ncol=min(len(y_cols), 5))
+
+    if save_path:
+        fig.savefig(save_path, format="svg", bbox_inches="tight")
+
     plt.show()
