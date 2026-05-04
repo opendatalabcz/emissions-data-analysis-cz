@@ -262,3 +262,14 @@ SCHUZE:
 dotazy - muzu nechat pocet prohlidek spojite - mnoho pozorovani?
 spatne provedeno filtrovani
 osoby a stanice byly brany jako spojite
+
+
+SCHUZE:
+rict ze aplikace je ready v dockeru
+oponentovi hned napsat, ze se s nim rad sejdu, ze to cely s nim projdu a ukazu nasazeni
+do zaveru napsat, ze jsem splnil zaddani - kazdou kapitolu 1 -2 vetami okomentovat a nejzajmavejsi vysledky zopakovat -> chvalit se
+abstrakt napsat strucnejse jednotlive veci, ale bez vysledku <- minimalne
+  - maximalne, kudy jsem se vypadal
+  - bez chvaly
+popsat frontend se screenshoty
+pullnout -> docker compose up (s nastavenim env promennych se to spusti)
