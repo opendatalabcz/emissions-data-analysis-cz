@@ -273,3 +273,7 @@ abstrakt napsat strucnejse jednotlive veci, ale bez vysledku <- minimalne
   - bez chvaly
 popsat frontend se screenshoty
 pullnout -> docker compose up (s nastavenim env promennych se to spusti)
+
+
+OTAZKY:
+jak to udelat s linkem na github
