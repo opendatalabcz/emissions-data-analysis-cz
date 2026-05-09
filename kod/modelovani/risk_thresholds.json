@@ -1,0 +1,47 @@
+{
+    "categories": [
+        {
+            "Category": 1,
+            "Lower_Threshold": 0.007056517130203666,
+            "Upper_Threshold": 0.1710640005228957,
+            "Actual_Fail_Rate": 0.002294911573866823,
+            "Count": 194343
+        },
+        {
+            "Category": 2,
+            "Lower_Threshold": 0.1710640005228957,
+            "Upper_Threshold": 0.3017166754746139,
+            "Actual_Fail_Rate": 0.007080265304127239,
+            "Count": 194343
+        },
+        {
+            "Category": 3,
+            "Lower_Threshold": 0.3017166754746139,
+            "Upper_Threshold": 0.45209996020551546,
+            "Actual_Fail_Rate": 0.015014767780510646,
+            "Count": 194342
+        },
+        {
+            "Category": 4,
+            "Lower_Threshold": 0.45209996020551546,
+            "Upper_Threshold": 0.6074916759968569,
+            "Actual_Fail_Rate": 0.029998507792922822,
+            "Count": 194343
+        },
+        {
+            "Category": 5,
+            "Lower_Threshold": 0.6074916759968569,
+            "Upper_Threshold": 0.9641555023321734,
+            "Actual_Fail_Rate": 0.07868047730044303,
+            "Count": 194343
+        }
+    ],
+    "bin_edges": [
+        0.007056517130203666,
+        0.1710640005228957,
+        0.3017166754746139,
+        0.45209996020551546,
+        0.6074916759968569,
+        0.9641555023321734
+    ]
+}
