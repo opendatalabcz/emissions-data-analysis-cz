@@ -265,14 +265,14 @@ osoby a stanice byly brany jako spojite
 
 
 SCHUZE:
-rict ze aplikace je ready v dockeru
+$rict ze aplikace je ready v dockeru
 oponentovi hned napsat, ze se s nim rad sejdu, ze to cely s nim projdu a ukazu nasazeni
-do zaveru napsat, ze jsem splnil zaddani - kazdou kapitolu 1 -2 vetami okomentovat a nejzajmavejsi vysledky zopakovat -> chvalit se
-abstrakt napsat strucnejse jednotlive veci, ale bez vysledku <- minimalne
-  - maximalne, kudy jsem se vypadal
+$do zaveru napsat, ze jsem splnil zaddani - kazdou kapitolu 1 -2 vetami okomentovat a nejzajmavejsi vysledky zopakovat -> chvalit se
+$abstrakt napsat strucnejse jednotlive veci, ale bez vysledku <- minimalne
+  - maximalne, kudy jsem se vydal
   - bez chvaly
-popsat frontend se screenshoty
-pullnout -> docker compose up (s nastavenim env promennych se to spusti)
+$popsat frontend se screenshoty
+$pullnout -> docker compose up (s nastavenim env promennych se to spusti)
 
 
 OTAZKY:
@@ -280,3 +280,22 @@ jak to udelat s linkem na github
 kde zminovat brotze
 co vsechno dat do priloh
 dat praci na github
+hostuje praci profinit nebo opendatalab
+obash priloh
+tituly do podekovani?
+
+
+dan rafl me bude nasazovat web
+dat do prace web stk portal - zminit, ze se snazim o jednotnost
+
+presunout vyhledavani
+pridat zalozku k overeni vozidla + grafy + o projektu
+
+dat kategorie do prace a o projektu
+
+upravit strukturu na konci
+
+pingnout, ze jsem odevzdal
+
+napsat, kdy budu vedet termin obhajoby
+teams poznamky
