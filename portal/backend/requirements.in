@@ -1,0 +1,14 @@
+# API and Server
+fastapi
+uvicorn
+pydantic
+
+# Data Processing & ML
+catboost
+pandas
+polars
+pyarrow
+lxml
+types-lxml
+requests
+matplotlib

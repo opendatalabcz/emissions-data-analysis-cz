@@ -1,6 +1,0 @@
-specificke poznamky str 10 u atypickych vozidel
-specificke ku pri necitelnem VIN
-shoda typu motoru vyzaduje poznamku
-
-
-sparovani kontrolnich ukonu z stk umozni ucrit, proc chybi hodnoty

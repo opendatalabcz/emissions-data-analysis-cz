@@ -1,7 +1,0 @@
-Téměř všechny záznamy z datasetu dat z měřících přístrojů mají ekvivalentní záznam v datasetu prohlídek - dává tedy smysl použít sloupce z datasetu prohlídek pro filtrace osobních dieselových vozidel.
-# cislo_protokolu_technicka = set(df_technicka.select(pl.col('Emise_CisloProtokolu').str.replace(r'^CZ-(0+)(\d+)', r'CZ-${2}'))['Emise_CisloProtokolu'])
-# cislo_protokolu_mereni = set(df_all.select(pl.col('CisloProtokolu').str.replace(r'^CZ-(0+)(\d+)', r'CZ-${2}'))['CisloProtokolu'])
-# cislo_protokolu_mereni - cislo_protokolu_technicka
-
-# RESULT:
-# {'CZ-120902-20-07-0174', 'CZ-410432-20-08-0152'}

@@ -1,0 +1,15 @@
+__pycache__
+.ipynb_checkpoints
+.venv
+catboost_info
+data
+node_modules
+graphs
+
+nosync
+*old
+/misc/**
+.~lock*
+
+.env
+

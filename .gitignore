@@ -9,3 +9,12 @@ RSV_vypis_vozidel_20251101.csv
 reporty/
 /catboost_info/
 model.bin
+node_modules
+graphs
+nosync
+*old
+/misc/**
+.~lock*
+.env
+poznamky
+prezentace
