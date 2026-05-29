@@ -58,7 +58,7 @@ Přejděte do složky `portal/` a vytvořte konfigurační soubor `.env` ze vzor
 cd portal
 cp .env.example .env
 ```
-V souboru `.env` lze upravit port, počet vláken pro stahování dat z NKOD a interval automatické aktualizace (`UPDATE_INTERVAL_DAYS`).
+V souboru `.env` lze upravit port, počet vláken pro stahování dat z NKOD a interval automatické aktualizace (`UPDATE_INTERVAL_DAYS`), případně lze stakování dat úplně vypnout nastavením parametru zastavení stahování na 1 (`DISABLE_DOWNLOAD`).
 
 ### Spuštění
 

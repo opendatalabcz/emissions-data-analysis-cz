@@ -3,7 +3,12 @@ import gzip
 import shutil
 from functools import partial
 import os
-
+import multiprocessing as mp
+os.environ["POLARS_MAX_THREADS"] = "1"
+try:
+    mp.set_start_method('spawn', force=True)
+except RuntimeError:
+    pass
 import polars as pl
 from lxml import etree
 import requests
@@ -112,8 +117,6 @@ def download_file(title, download_url, target_dir, max_attempts, verbosity):
                         
             if verbosity > Verbosity.NORMAL:
                 print(f'Stahuji: "{title}".')
-            elif verbosity > Verbosity.QUIET:
-                print('.', end='', flush=True)
 
             return
         # Vyřešení chyby ve stahování
@@ -131,27 +134,6 @@ def download_file(title, download_url, target_dir, max_attempts, verbosity):
                     print(attempt + 1, end='', flush=True)
             else:
                 raise requests.exceptions.RequestException(f'Stahování souboru "{title}" selhalo po {max_attempts} pokusech.') from e
-
-
-# Stažení datasetu z data.gov.cz
-def download_files(sparql_endpoint, download_dir, parent_dataset_iri, start_date, end_date, already_processed, no_threads, max_attempts, verbosity):
-    # Vytvoření adresáře pro uložení souborů
-    create_directory(download_dir, verbosity)
-
-    # Stažení URL adres souborů spolu s jejich názvy
-    titles, download_urls = get_url_addresses(sparql_endpoint, parent_dataset_iri, start_date, end_date, already_processed, verbosity)
-
-    # Paralelní stažení souborů
-    if verbosity > verbosity.QUIET:
-        print(f'Stahuji souběžně {len(download_urls)} souborů při použití {no_threads} vláken.')
-    with ThreadPoolExecutor(max_workers=no_threads) as executor:
-        wrapper = lambda title, download_url: download_file(title, download_url, download_dir, max_attempts, verbosity)
-        results = executor.map(wrapper, titles, download_urls)
-        list(results) # Vynucení počkání na dokončení stahování
-    
-    # Nová řádka pro vizuélní odlišení konce úkonu
-    if verbosity > Verbosity.QUIET:
-        print('\nSTAHOVÁNÍ DONONČENO.\n')
 
 
 # Stažení seznamu stanic z data.gov.cz
@@ -204,34 +186,11 @@ def extract_file(file_name, source_dir, target_dir, verbosity, delete):
 
         if verbosity > Verbosity.NORMAL:
             print(f'Extrahuji: "{file_name}".')
-        elif verbosity > Verbosity.QUIET:
-            print('.', end='', flush=True)
     
     # Smazání původního souboru
     if delete:
         delete_path(source_file_path, verbosity)
 
-
-def extract_files(source_dir, target_dir, no_threads, verbosity, delete=True):
-    # Vytvoření adresáře pro uložení souborů
-    create_directory(target_dir, verbosity)
-
-    # Paralelní extrahování souborů
-    extractable = list(source_dir.glob('*.gz'))
-    if verbosity > verbosity.QUIET:
-        print(f'Extrahuji souběžně {len(extractable)} souborů při použití {no_threads} vláken.')
-    with ThreadPoolExecutor(max_workers=no_threads) as executor:
-        wrapper = lambda file_path: extract_file(file_path.name, source_dir, target_dir, verbosity, delete)
-        results = executor.map(wrapper, extractable)
-        list(results) # Vynuceni pockani na dokonceni extrahovani
-    
-    # Smazání zdrojového repozitáře
-    if delete:
-        delete_path(source_dir, verbosity)
-
-    # Nová řádka pro vizuélní odlišení konce úkonu
-    if verbosity > Verbosity.QUIET:
-        print('\nEXTRAKCE DONONČENA.\n')
 
 #--------------------------------------------------------------------------------------------------------------
 
@@ -785,39 +744,6 @@ def parse_stanice(element, namespaces):
 
 #--------------------------------------------------------------------------------------------------------------
 
-def parse_to_parquet(source_dir, file_parser, no_threads, verbosity, delete):
-    # Získání seznamu souborů
-    xml_files = list(source_dir.glob('*.xml'))
-    if len(xml_files) > 1:
-        xml_files.sort(key=date_from_file_path)
-    else:
-        xml_files.sort()
-        
-    if verbosity > Verbosity.QUIET:
-        print(f'Nalezeno {len(xml_files)} .xml souborů. Spouštím {no_threads} vláken.')
-
-    # Samotně paralelní parsování souborů
-    futures = []
-    with ProcessPoolExecutor(max_workers=no_threads) as executor:
-        # Poslání úkolů do poolu
-        for xml_file in xml_files:
-            future = executor.submit(file_parser, xml_file)
-            futures.append(future)
-
-        # Process results as they complete
-        for future in as_completed(futures):
-            # .result() zpropaguje výjimku, pokud nastane uvnitř parsování
-            future.result() 
-
-    # Nová řádka pro vizuélní odlišení konce úkonu
-    if verbosity > Verbosity.QUIET:
-        print('\nPARSOVÁNÍ DONONČENO.\n')
-
-    # Smazání zdrojového repozitáře
-    if delete:
-        delete_path(source_dir, verbosity)
-
-
 def write_batch(output_dir, batch_data, file_stem, schema=None, cast_func=None):
     if not batch_data: return
     
@@ -834,20 +760,68 @@ def write_batch(output_dir, batch_data, file_stem, schema=None, cast_func=None):
         
     df.write_parquet(output_dir / file_name)
 
+def process_single_pipeline(title, download_url, base_dir, parser_func, max_attempts, verbosity):
+    gz_dir = base_dir / 'gz'
+    xml_dir = base_dir / 'xml'
+    parquet_dir = base_dir / 'parquet'
 
-def parse_series_to_parquet(source_dir, target_dir, file_parser, no_threads, verbosity, delete=True):
-    create_directory(target_dir, verbosity)
+    create_directory(gz_dir, Verbosity.QUIET)
+    create_directory(xml_dir, Verbosity.QUIET)
+    create_directory(parquet_dir, Verbosity.QUIET)
 
-    # Vytvoření partial funkce pro podporu serializace v ProcessPoolExecutor
-    wrapper_parser = partial(
-        file_parser,
-        target_dir,
-        verbosity=verbosity,
-        delete=delete
-    )
+    # Stažení archivu
+    download_file(title, download_url, gz_dir, max_attempts, verbosity)
+    
+    # Extrakce a smazání .gz
+    xml_file_name = title + '.xml'
+    extract_file(xml_file_name + '.gz', gz_dir, xml_dir, verbosity, delete=True)
+    
+    # Parsování a smazání .xml
+    xml_file_path = xml_dir / xml_file_name
+    parser_func(parquet_dir, xml_file_path, verbosity, delete=True)
+    
+    return title
 
-    # Volání existující pomocné funkce pro paralelní zpracování
-    parse_to_parquet(source_dir, wrapper_parser, no_threads, verbosity, delete)
+def process_dataset_pipeline(sparql_endpoint, base_dir, parent_dataset_iri, start_date, end_date, parser_func, no_processes, max_attempts, verbosity):
+    # Nalezení již hotových souborů podle existujících Parquet souborů
+    parquet_dir = base_dir / 'parquet'
+    already_processed = downloaded_dates([parquet_dir])
+    
+    if verbosity > Verbosity.QUIET:
+        print(f'Nalezeno {len(already_processed)} již zpracovaných souborů.')
+
+    # Získání URL adres ke stažení
+    titles, download_urls = get_url_addresses(sparql_endpoint, parent_dataset_iri, start_date, end_date, already_processed, verbosity)
+    total_files = len(titles)
+    
+    if total_files == 0:
+        if verbosity > Verbosity.QUIET:
+            print('Žádné nové soubory ke zpracování.')
+        return
+
+    if verbosity > Verbosity.QUIET:
+        print(f'Spouštím zpracování {total_files} souborů (download -> extract -> parquet) v {no_processes} procesech.')
+
+    # Definice hranice pro tisk (každých 10 %)
+    print_threshold = max(1, total_files // 10)
+    processed_count = 0
+
+    # Příprava funkce pro multiprocessing
+    worker = partial(process_single_pipeline, base_dir=base_dir, parser_func=parser_func, max_attempts=max_attempts, verbosity=verbosity)
+
+    with ProcessPoolExecutor(max_workers=no_processes) as executor:
+        # Vytvoření mapy úloh
+        futures = {executor.submit(worker, t, u): t for t, u in zip(titles, download_urls)}
+        
+        for future in as_completed(futures):
+            try:
+                future.result()
+                processed_count += 1
+                # Tisk stavu při dosažení 10% hranice nebo na konci
+                if verbosity > Verbosity.QUIET and (processed_count % print_threshold == 0 or processed_count == total_files or processed_count == 1):
+                    print(f'Zpracováno {processed_count}/{total_files} souborů.', flush=True)
+            except Exception as e:
+                print(f'Kritická chyba při zpracování souboru: {e}')
 
 #--------------------------------------------------------------------------------------------------------------
 
@@ -882,8 +856,6 @@ def parse_inspections_file(target_dir, xml_file, verbosity, delete):
 
         if verbosity > Verbosity.NORMAL:
             print(f'Zapisuji vyparsovaný parquet soubor ze: "{xml_file.stem}".')
-        elif verbosity > Verbosity.QUIET:
-            print('.', end='', flush=True)
 
     # Smazání původního souboru
     if delete:
@@ -924,8 +896,6 @@ def parse_measurements_file(target_dir, xml_file, verbosity, delete):
         write_batch(target_dir, mereni_batch, xml_file.stem, schema=mereni_schema, cast_func=clean.cast_mereni)
         if verbosity > Verbosity.NORMAL:
             print(f'Zapisuji vyparsované parquet soubory ze: "{xml_file.stem}".')
-        elif verbosity > Verbosity.QUIET:
-            print('.', end='', flush=True)
 
     # Smazání původního souboru
     if delete:
@@ -974,8 +944,6 @@ def parse_stations_file(target_dir, xml_file, verbosity, delete):
 
         if verbosity > Verbosity.NORMAL:
             print(f'Zapisuji stanice z: "{xml_file.stem}".')
-        elif verbosity > Verbosity.QUIET:
-            print('.', end='', flush=True)
 
     except Exception as e:
         print(f'Chyba při parsování "{xml_file}": {e}')
@@ -988,26 +956,40 @@ def parse_stations_file(target_dir, xml_file, verbosity, delete):
 
 #--------------------------------------------------------------------------------------------------------------
 def run_preprocessing():
-    explain_verbosity(config.VERBOSITY)
-
     print('—————————————————————————————————Stanice STK a SME:—————————————————————————————————————————————\n')
     # Seznam stanic prochází denní aktualizací
     clear_folder(config.STATIONS_DIR, config.VERBOSITY)
+    create_directory(config.STATIONS_DIR / 'xml', config.VERBOSITY)
+    create_directory(config.STATIONS_DIR / 'parquet', config.VERBOSITY)
     download_stations(config.SPARQL_ENDPOINT, config.STATIONS_DIR / 'gz', config.DATASET_STATIONS, config.VERBOSITY)
-    extract_files(config.STATIONS_DIR / 'gz', config.STATIONS_DIR / 'xml', 1, config.VERBOSITY)
-    parse_series_to_parquet(config.STATIONS_DIR / 'xml', config.STATIONS_DIR / 'parquet', parse_stations_file, 1, config.VERBOSITY, True)
+    extract_file('Stanice STK a SME.xml.gz', config.STATIONS_DIR / 'gz', config.STATIONS_DIR / 'xml', config.VERBOSITY, delete=True)
+    parse_stations_file(config.STATIONS_DIR / 'parquet', config.STATIONS_DIR / 'xml' / 'Stanice STK a SME.xml', config.VERBOSITY, delete=True)
 
     print('——————————————————————————————————PROHLÍDKY VOZIDEL STK A SME:——————————————————————————————————\n')
-    downloaded_inspection_dates = downloaded_dates([config.INSPECTIONS_DIR / 'gz', config.INSPECTIONS_DIR / 'xml', config.INSPECTIONS_DIR / 'parquet'])
-    download_files(config.SPARQL_ENDPOINT, config.INSPECTIONS_DIR / 'gz', config.PARENT_DATASET_INSPECTIONS, config.START_DATE, config.END_DATE, downloaded_inspection_dates, config.NO_DOWNLOAD_THREADS, config.MAX_DOWNLOAD_ATTEMPTS, config.VERBOSITY)
-    extract_files(config.INSPECTIONS_DIR / 'gz', config.INSPECTIONS_DIR / 'xml', config.NO_EXTRACT_THREADS, config.VERBOSITY)
-    parse_series_to_parquet(config.INSPECTIONS_DIR / 'xml', config.INSPECTIONS_DIR / 'parquet', parse_inspections_file, config.NO_PARSE_PROCESSES, config.VERBOSITY, True)
+    process_dataset_pipeline(
+        sparql_endpoint=config.SPARQL_ENDPOINT, 
+        base_dir=config.INSPECTIONS_DIR, 
+        parent_dataset_iri=config.PARENT_DATASET_INSPECTIONS, 
+        start_date=config.START_DATE, 
+        end_date=config.END_DATE, 
+        parser_func=parse_inspections_file, 
+        no_processes=config.NO_PARSE_PROCESSES, 
+        max_attempts=config.MAX_DOWNLOAD_ATTEMPTS, 
+        verbosity=config.VERBOSITY
+    )
 
     print('\n————————————————————————————————DATA Z MĚŘÍCÍCH PŘÍSTROJŮ:————————————————————————————————————\n')
-    downloaded_measurement_dates = downloaded_dates([config.MEASUREMENTS_DIR / 'gz', config.MEASUREMENTS_DIR / 'xml', config.MEASUREMENTS_DIR / 'parquet'])
-    download_files(config.SPARQL_ENDPOINT, config.MEASUREMENTS_DIR / 'gz', config.PARENT_DATASET_MEASUREMENTS, config.START_DATE, config.END_DATE, downloaded_measurement_dates, config.NO_DOWNLOAD_THREADS, config.MAX_DOWNLOAD_ATTEMPTS, config.VERBOSITY)
-    extract_files(config.MEASUREMENTS_DIR / 'gz', config.MEASUREMENTS_DIR / 'xml', config.NO_EXTRACT_THREADS, config.VERBOSITY)
-    parse_series_to_parquet(config.MEASUREMENTS_DIR / 'xml', config.MEASUREMENTS_DIR / 'parquet', parse_measurements_file, config.NO_PARSE_PROCESSES, config.VERBOSITY, True)
+    process_dataset_pipeline(
+        sparql_endpoint=config.SPARQL_ENDPOINT, 
+        base_dir=config.MEASUREMENTS_DIR, 
+        parent_dataset_iri=config.PARENT_DATASET_MEASUREMENTS, 
+        start_date=config.START_DATE, 
+        end_date=config.END_DATE, 
+        parser_func=parse_measurements_file, 
+        no_processes=config.NO_PARSE_PROCESSES, 
+        max_attempts=config.MAX_DOWNLOAD_ATTEMPTS, 
+        verbosity=config.VERBOSITY
+    )
     
 
 

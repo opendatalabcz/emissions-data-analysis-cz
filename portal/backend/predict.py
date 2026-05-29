@@ -14,7 +14,7 @@ _VIN_INDEX = None
 
 def build_vin_index():
     global _VIN_INDEX
-    print("Vytvářím index posledních úspěšných prohlídek pro všechna VIN v paměti (může to chvíli trvat)...", flush=True)
+    print("Vytvářím index posledních úspěšných prohlídek pro všechna VIN v paměti.", flush=True)
     MERENI_PATH = str(config.MEASUREMENTS_DIR / 'parquet' / '*.parquet')
     PROHLIDKY_PATH = str(config.INSPECTIONS_DIR / 'parquet' / '*.parquet')
 

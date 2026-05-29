@@ -7,9 +7,15 @@ from preprocess import run_preprocessing
 from predict import infer_vin, init_model, build_vin_index
 import sys
 import config
+import logging
 
 is_ready = False
 
+class HealthCheckFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.getMessage().find("GET /health") == -1
+
+logging.getLogger("uvicorn.access").addFilter(HealthCheckFilter())
 app = FastAPI()
 
 @app.get("/predict")
@@ -47,17 +53,24 @@ async def health_check():
 async def update_data_and_generate_graphs():
     global is_ready
     while True:
-        print("Stahuji data z data.gov.cz do /app/data/parquets...")
-        process = await asyncio.create_subprocess_exec(
-            sys.executable, "-c", "from preprocess import run_preprocessing; run_preprocessing()"
-        )
-        await process.wait()
+        if config.DISABLE_DOWNLOAD == 0:
+            print("Stahuji data z data.gov.cz do /app/data/parquets...")
+            process = await asyncio.create_subprocess_exec(
+                sys.executable, "-c", "from preprocess import run_preprocessing; run_preprocessing()"
+            )
+            await process.wait()
+            if process.returncode != 0:
+                print(f"Chyba: Preprocessing selhal s kódem {process.returncode}. Zastavuji iteraci.", flush=True)
+                break
         
         print("Generuji grafy z .parquet souborů...", flush=True)
         process_graphs = await asyncio.create_subprocess_exec(
             sys.executable, "-c", "from generate_graphs import generate_all_graphs; generate_all_graphs()"
         )
         await process_graphs.wait()
+        if process_graphs.returncode != 0:
+            print(f"Chyba: Generování grafů selhalo s kódem {process_graphs.returncode}. Zastavuji iteraci.", flush=True)
+            break
         
         print("Aktualizuji index VIN v paměti...", flush=True)
         await asyncio.to_thread(build_vin_index)
@@ -65,6 +78,9 @@ async def update_data_and_generate_graphs():
         
         print(f"Grafy uloženy. Uspávám na {config.UPDATE_INTERVAL_DAYS} dní.", flush=True)
         is_ready = True
+
+        if config.DISABLE_DOWNLOAD != 0:
+            break
         await asyncio.sleep(config.UPDATE_INTERVAL_DAYS * 86400)
 
 @app.on_event("startup")

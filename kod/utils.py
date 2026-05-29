@@ -82,11 +82,6 @@ def floats_sublist(original_list):
             continue
 
 
-def explain_verbosity(verbosity):
-    if verbosity == Verbosity.NORMAL:
-        print('"."\t- provedení operace se souborem\n"-"\t- přeskočení souboru\n n \t- číslo pokusu o provedení operace\n')
-
-
 def skip_file(file, verbosity):
     if file.exists():
         if verbosity > Verbosity.NORMAL:
