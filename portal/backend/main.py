@@ -54,7 +54,7 @@ async def update_data_and_generate_graphs():
     global is_ready
     while True:
         if config.DISABLE_DOWNLOAD == 0:
-            print("Stahuji data z data.gov.cz do /app/data/parquets...")
+            print("Stahuji data z data.gov.cz do /app/data/parquets...", flush=True)
             process = await asyncio.create_subprocess_exec(
                 sys.executable, "-c", "from preprocess import run_preprocessing; run_preprocessing()"
             )
