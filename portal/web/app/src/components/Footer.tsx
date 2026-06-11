@@ -13,8 +13,7 @@ export default function Footer() {
   return (
     <AntFooter className="flex flex-col items-center justify-center px-4 py-2 space-y-6">
       <div>
-        <p>
-          &copy;&nbsp;
+        <p className="text-center">
           <a
             href="https://opendatalab.cz/"
             target="_blank"
@@ -46,6 +45,9 @@ export default function Footer() {
           >
             FIT ČVUT
           </a>
+          .
+          <br />
+          Provozovatel neodpovídá za správnost a úplnost zpracovaných dat a informací, ani tato neověřuje a zříká se zodpovědnosti za veškeré škody a újmy, které by použitím těchto dat mohly vzniknout.
         </p>
       </div>
 
